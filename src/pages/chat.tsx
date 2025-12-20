@@ -1,6 +1,3 @@
-
 export default function ChatDisplay() {
-  return (
-    <div>ChatDisplay</div>
-  )
+  return <div>ChatDisplay</div>;
 }

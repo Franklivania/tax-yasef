@@ -1,0 +1,9 @@
+.github
+next.config.mjs
+public
+components.json
+.cursorrules
+.cursor
+amplify.yml
+docs
+src/docs

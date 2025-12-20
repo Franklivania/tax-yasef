@@ -1,9 +1,8 @@
-import { useUserStore } from './store/useUserStore';
-import { useTokenUsageStore } from './store/useTokenUsageStore';
-
+import { useUserStore } from "./store/useUserStore";
+import { useTokenUsageStore } from "./store/useTokenUsageStore";
 
 export async function initializeApp(): Promise<void> {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   try {
     const userStore = useUserStore.getState();
@@ -16,7 +15,7 @@ export async function initializeApp(): Promise<void> {
     tokenStore.resetIfNeeded();
 
     if (import.meta.env.DEV) {
-      console.log('App initialized:', {
+      console.log("App initialized:", {
         userToken: userStore.userToken,
         initialized: userStore.initialized,
         ipAddress: userStore.ipAddress,
@@ -24,7 +23,7 @@ export async function initializeApp(): Promise<void> {
       });
     }
   } catch (error) {
-    console.error('Failed to initialize app:', error);
+    console.error("Failed to initialize app:", error);
   }
 }
 
@@ -38,4 +37,3 @@ export function getCurrentUser() {
     initialized: userStore.initialized,
   };
 }
-

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 type MarkdownNode = React.ReactElement | string | null;
 
@@ -12,13 +12,13 @@ export function parseMarkdown(content: string): MarkdownNode[] {
   if (!content) return [];
 
   // Normalize line endings
-  content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  content = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
   const result: MarkdownNode[] = [];
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   const context: ParseContext = {
     inCodeBlock: false,
-    codeBlockLanguage: '',
+    codeBlockLanguage: "",
     codeBlockContent: [],
   };
 
@@ -27,18 +27,23 @@ export function parseMarkdown(content: string): MarkdownNode[] {
     const line = lines[i];
 
     // Handle code blocks
-    if (line.startsWith('```')) {
+    if (line.startsWith("```")) {
       if (context.inCodeBlock) {
         // End of code block
-        const codeContent = context.codeBlockContent.join('\n');
+        const codeContent = context.codeBlockContent.join("\n");
         const language = context.codeBlockLanguage;
         result.push(
-          <pre key={`code-${result.length}`} className="bg-muted rounded-lg p-4 overflow-x-auto my-4">
-            <code className={language ? `language-${language}` : ''}>{codeContent}</code>
+          <pre
+            key={`code-${result.length}`}
+            className="bg-muted rounded-lg p-4 overflow-x-auto my-4"
+          >
+            <code className={language ? `language-${language}` : ""}>
+              {codeContent}
+            </code>
           </pre>
         );
         context.inCodeBlock = false;
-        context.codeBlockLanguage = '';
+        context.codeBlockLanguage = "";
         context.codeBlockContent = [];
       } else {
         // Start of code block
@@ -57,7 +62,9 @@ export function parseMarkdown(content: string): MarkdownNode[] {
 
     // Handle horizontal rules
     if (/^[-*_]{3,}$/.test(line.trim())) {
-      result.push(<hr key={`hr-${result.length}`} className="my-6 border-border" />);
+      result.push(
+        <hr key={`hr-${result.length}`} className="my-6 border-border" />
+      );
       i++;
       continue;
     }
@@ -66,16 +73,20 @@ export function parseMarkdown(content: string): MarkdownNode[] {
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
     if (headingMatch) {
       const level = headingMatch[1].length;
-      const text = parseInlineMarkdown(headingMatch[2], `heading-${result.length}`);
-      const className = {
-        1: 'text-4xl font-bold my-6',
-        2: 'text-3xl font-bold my-5',
-        3: 'text-2xl font-semibold my-4',
-        4: 'text-xl font-semibold my-3',
-        5: 'text-lg font-semibold my-2',
-        6: 'text-base font-semibold my-2',
-      }[level] || 'text-base font-semibold my-2';
-      
+      const text = parseInlineMarkdown(
+        headingMatch[2],
+        `heading-${result.length}`
+      );
+      const className =
+        {
+          1: "text-4xl font-bold my-6",
+          2: "text-3xl font-bold my-5",
+          3: "text-2xl font-semibold my-4",
+          4: "text-xl font-semibold my-3",
+          5: "text-lg font-semibold my-2",
+          6: "text-base font-semibold my-2",
+        }[level] || "text-base font-semibold my-2";
+
       const HeadingComponent = React.createElement(
         `h${level}`,
         { key: `heading-${result.length}`, className },
@@ -87,15 +98,18 @@ export function parseMarkdown(content: string): MarkdownNode[] {
     }
 
     // Handle blockquotes
-    if (line.startsWith('>')) {
+    if (line.startsWith(">")) {
       const quoteLines: string[] = [];
-      while (i < lines.length && lines[i].startsWith('>')) {
+      while (i < lines.length && lines[i].startsWith(">")) {
         quoteLines.push(lines[i].slice(1).trim());
         i++;
       }
-      const quoteContent = quoteLines.join('\n');
+      const quoteContent = quoteLines.join("\n");
       result.push(
-        <blockquote key={`quote-${result.length}`} className="border-l-4 border-muted-foreground pl-4 my-4 italic text-muted-foreground">
+        <blockquote
+          key={`quote-${result.length}`}
+          className="border-l-4 border-muted-foreground pl-4 my-4 italic text-muted-foreground"
+        >
           {parseInlineMarkdown(quoteContent, `quote-${result.length}`)}
         </blockquote>
       );
@@ -103,7 +117,7 @@ export function parseMarkdown(content: string): MarkdownNode[] {
     }
 
     // Handle tables
-    if (line.includes('|') && i + 1 < lines.length) {
+    if (line.includes("|") && i + 1 < lines.length) {
       const tableResult = parseTable(lines, i);
       if (tableResult) {
         result.push(tableResult.element);
@@ -123,27 +137,29 @@ export function parseMarkdown(content: string): MarkdownNode[] {
     }
 
     // Handle empty lines
-    if (line.trim() === '') {
+    if (line.trim() === "") {
       i++;
       continue;
     }
 
     // Handle regular paragraphs
     const paragraphLines: string[] = [];
-    while (i < lines.length && 
-           lines[i].trim() !== '' && 
-           !lines[i].startsWith('#') &&
-           !lines[i].startsWith('```') &&
-           !lines[i].startsWith('>') &&
-           !lines[i].includes('|') &&
-           !/^(\s*)([-*+]|\d+\.)\s+/.test(lines[i]) &&
-           !/^[-*_]{3,}$/.test(lines[i].trim())) {
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !lines[i].startsWith("#") &&
+      !lines[i].startsWith("```") &&
+      !lines[i].startsWith(">") &&
+      !lines[i].includes("|") &&
+      !/^(\s*)([-*+]|\d+\.)\s+/.test(lines[i]) &&
+      !/^[-*_]{3,}$/.test(lines[i].trim())
+    ) {
       paragraphLines.push(lines[i]);
       i++;
     }
-    
+
     if (paragraphLines.length > 0) {
-      const paragraphText = paragraphLines.join('\n');
+      const paragraphText = paragraphLines.join("\n");
       result.push(
         <p key={`p-${result.length}`} className="my-3 leading-relaxed">
           {parseInlineMarkdown(paragraphText, `p-${result.length}`)}
@@ -158,7 +174,10 @@ export function parseMarkdown(content: string): MarkdownNode[] {
   return result;
 }
 
-function parseInlineMarkdown(text: string, keyPrefix: string): React.ReactNode[] {
+function parseInlineMarkdown(
+  text: string,
+  keyPrefix: string
+): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   let lastIndex = 0;
   let keyCounter = 0;
@@ -172,7 +191,10 @@ function parseInlineMarkdown(text: string, keyPrefix: string): React.ReactNode[]
     {
       regex: /`([^`]+)`/g,
       handler: (match) => (
-        <code key={`${keyPrefix}-code-${keyCounter++}`} className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+        <code
+          key={`${keyPrefix}-code-${keyCounter++}`}
+          className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono"
+        >
           {match[1]}
         </code>
       ),
@@ -218,7 +240,10 @@ function parseInlineMarkdown(text: string, keyPrefix: string): React.ReactNode[]
       regex: /(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)|(?<!_)_(?!_)([^_\n]+?)_(?!_)/g,
       handler: (match) => (
         <em key={`${keyPrefix}-italic-${keyCounter++}`} className="italic">
-          {parseInlineMarkdown(match[1] || match[2], `${keyPrefix}-italic-${keyCounter}`)}
+          {parseInlineMarkdown(
+            match[1] || match[2],
+            `${keyPrefix}-italic-${keyCounter}`
+          )}
         </em>
       ),
     },
@@ -303,13 +328,13 @@ function parseTable(lines: string[], startIndex: number): TableResult | null {
 
   // Parse header row
   const headerLine = lines[i];
-  if (!headerLine.includes('|')) return null;
-  
+  if (!headerLine.includes("|")) return null;
+
   const headerCells = headerLine
-    .split('|')
+    .split("|")
     .map((cell) => cell.trim())
-    .filter((cell) => cell !== '');
-  
+    .filter((cell) => cell !== "");
+
   if (headerCells.length === 0) return null;
   rows.push(headerCells);
   i++;
@@ -317,16 +342,16 @@ function parseTable(lines: string[], startIndex: number): TableResult | null {
   // Check for separator row
   if (i >= lines.length) return null;
   const separatorLine = lines[i];
-  if (!/^[\s|:\-]+$/.test(separatorLine)) return null;
+  if (!/^[\s|:-]+$/.test(separatorLine)) return null;
   i++;
 
   // Parse data rows
-  while (i < lines.length && lines[i].includes('|')) {
+  while (i < lines.length && lines[i].includes("|")) {
     const cells = lines[i]
-      .split('|')
+      .split("|")
       .map((cell) => cell.trim())
-      .filter((cell) => cell !== '');
-    
+      .filter((cell) => cell !== "");
+
     if (cells.length > 0) {
       rows.push(cells);
     }
@@ -359,7 +384,10 @@ function parseTable(lines: string[], startIndex: number): TableResult | null {
                     key={`td-${rowIdx}-${cellIdx}`}
                     className="border border-border px-4 py-2"
                   >
-                    {parseInlineMarkdown(cell, `table-${startIndex}-td-${rowIdx}-${cellIdx}`)}
+                    {parseInlineMarkdown(
+                      cell,
+                      `table-${startIndex}-td-${rowIdx}-${cellIdx}`
+                    )}
                   </td>
                 ))}
               </tr>
@@ -380,18 +408,23 @@ interface ListResult {
 function parseList(lines: string[], startIndex: number): ListResult | null {
   const items: Array<{ content: string; children: typeof items }> = [];
   let i = startIndex;
-  const stack: Array<{ level: number; items: typeof items }> = [{ level: -1, items }];
+  const stack: Array<{ level: number; items: typeof items }> = [
+    { level: -1, items },
+  ];
 
   while (i < lines.length) {
     const line = lines[i];
     const listMatch = line.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/);
-    
+
     if (!listMatch) {
       // Check if it's a continuation of previous item (indented line)
       if (line.trim() && /^\s+/.test(line) && stack.length > 1) {
-        const lastItem = stack[stack.length - 1].items[stack[stack.length - 1].items.length - 1];
+        const lastItem =
+          stack[stack.length - 1].items[
+            stack[stack.length - 1].items.length - 1
+          ];
         if (lastItem) {
-          lastItem.content += ' ' + line.trim();
+          lastItem.content += " " + line.trim();
         }
         i++;
         continue;
@@ -411,7 +444,7 @@ function parseList(lines: string[], startIndex: number): ListResult | null {
     const currentList = stack[stack.length - 1].items;
     const item = { content, children: [] };
     currentList.push(item);
-    
+
     stack.push({ level, items: item.children });
     i++;
   }
@@ -428,10 +461,10 @@ function parseList(lines: string[], startIndex: number): ListResult | null {
     ordered: boolean,
     depth: number = 0
   ): React.ReactElement => {
-    const ListTag = ordered ? 'ol' : 'ul';
+    const ListTag = ordered ? "ol" : "ul";
     const className = ordered
-      ? 'list-decimal list-inside my-2 space-y-1 ml-4'
-      : 'list-disc list-inside my-2 space-y-1 ml-4';
+      ? "list-decimal list-inside my-2 space-y-1 ml-4"
+      : "list-disc list-inside my-2 space-y-1 ml-4";
 
     return (
       <ListTag key={`list-${depth}-${startIndex}`} className={className}>
