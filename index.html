@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/android-chrome-512x512.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tax Yasef</title>
+    <script>
+      (function() {
+        try {
+          const stored = localStorage.getItem('tax-yasef-theme-storage');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            // Zustand persist stores as {state: {theme: "light"}, version: 0}
+            const theme = parsed?.state?.theme || 'system';
+            
+            const getSystemTheme = () => {
+              return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            };
+            
+            const effectiveTheme = theme === 'system' ? getSystemTheme() : theme;
+            
+            if (effectiveTheme === 'dark') {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+          }
+        } catch (e) {
+          // Ignore errors
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

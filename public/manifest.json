@@ -1,0 +1,25 @@
+{
+  "name": "Tax Yasef",
+  "short_name": "Tax Yasef",
+  "description": "Understand what your tax situation will be based on the Nigerian new Tax Act",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["tax", "finance", "business", "accounting", "income", "taxation", "investment"],
+  "lang": "en",
+  "dir": "ltr"
+}
