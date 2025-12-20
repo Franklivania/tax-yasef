@@ -1,50 +1,55 @@
-
 export const getUserIP = async (): Promise<string | null> => {
   try {
     const localIP = await getLocalIPViaWebRTC();
     if (localIP) return localIP;
   } catch (error) {
-    console.warn('WebRTC IP detection failed:', error);
+    console.warn("WebRTC IP detection failed:", error);
   }
 
   try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    if (!response.ok) throw new Error('Failed to fetch IP');
+    const response = await fetch("https://api.ipify.org?format=json");
+    if (!response.ok) throw new Error("Failed to fetch IP");
     const data = await response.json();
     return data.ip || null;
   } catch (error) {
-    console.warn('Could not fetch IP address:', error);
+    console.warn("Could not fetch IP address:", error);
     return null;
   }
 };
 
+interface WindowWithRTCPeerConnection extends Window {
+  webkitRTCPeerConnection?: typeof RTCPeerConnection;
+  mozRTCPeerConnection?: typeof RTCPeerConnection;
+}
 
 const getLocalIPViaWebRTC = (): Promise<string | null> => {
   return new Promise((resolve) => {
-    const RTCPeerConnection = 
+    const win = window as unknown as WindowWithRTCPeerConnection;
+    const RTCPeerConnectionConstructor =
       window.RTCPeerConnection ||
-      (window as any).webkitRTCPeerConnection ||
-      (window as any).mozRTCPeerConnection;
+      win.webkitRTCPeerConnection ||
+      win.mozRTCPeerConnection;
 
-    if (!RTCPeerConnection) {
+    if (!RTCPeerConnectionConstructor) {
       resolve(null);
       return;
     }
 
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    const pc = new RTCPeerConnectionConstructor({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
     const ips: string[] = [];
-    const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g;
+    const ipRegex =
+      /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g;
 
-    pc.createDataChannel('');
+    pc.createDataChannel("");
 
     pc.onicecandidate = (event) => {
       if (!event.candidate) {
         pc.close();
         // Prefer IPv4, then IPv6
-        const ipv4 = ips.find(ip => /^[0-9]/.test(ip));
+        const ipv4 = ips.find((ip) => /^[0-9]/.test(ip));
         resolve(ipv4 || ips[0] || null);
         return;
       }
@@ -66,12 +71,11 @@ const getLocalIPViaWebRTC = (): Promise<string | null> => {
     // Timeout after 3 seconds
     setTimeout(() => {
       pc.close();
-      const ipv4 = ips.find(ip => /^[0-9]/.test(ip));
+      const ipv4 = ips.find((ip) => /^[0-9]/.test(ip));
       resolve(ipv4 || ips[0] || null);
     }, 3000);
   });
 };
-
 
 export const getUserBrowserInfo = () => {
   return {
