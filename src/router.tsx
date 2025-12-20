@@ -4,15 +4,15 @@ import ChatDisplay from "./pages/chat";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <App />,
   },
   {
-    path: '/chat',
-    element: <ChatDisplay />
-  }
-])
+    path: "/chat",
+    element: <ChatDisplay />,
+  },
+]);
 
 export function Router() {
-  return <RouterProvider router={router} />
+  return <RouterProvider router={router} />;
 }

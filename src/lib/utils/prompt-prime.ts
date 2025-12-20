@@ -4,41 +4,114 @@
  */
 
 // Blocked response message
-const BLOCKED_RESPONSE = "We do not do that heare, if you no wan guard yasef, shaa leave this place comot. \n ask better question abeg, make we continue.";
+const BLOCKED_RESPONSE =
+  "We do not do that heare, if you no wan guard yasef, shaa leave this place comot. \n ask better question abeg, make we continue.";
 
 // Inappropriate topics to block
 const BLOCKED_TOPICS = [
-  'love', 'sex', 'nudity', 'dating', 'romance', 'relationship', 'marriage',
-  'porn', 'pornography', 'explicit', 'adult content', 'nsfw',
-  'gossip', 'celebrity', 'entertainment', 'sports', 'politics',
-  'religion', 'religious', 'spiritual', 'faith',
-  'violence', 'weapon', 'gun', 'kill', 'murder',
-  'drug', 'alcohol', 'substance abuse',
-  'gambling', 'casino', 'betting', 'lottery',
-  'cryptocurrency', 'crypto', 'bitcoin', 'blockchain',
-  'investment advice', 'financial advice', 'trading',
-  'medical', 'health', 'disease', 'treatment',
-  'legal advice', 'lawyer', 'attorney', 'lawsuit'
+  "love",
+  "sex",
+  "nudity",
+  "dating",
+  "romance",
+  "relationship",
+  "marriage",
+  "porn",
+  "pornography",
+  "explicit",
+  "adult content",
+  "nsfw",
+  "gossip",
+  "celebrity",
+  "entertainment",
+  "sports",
+  "politics",
+  "religion",
+  "religious",
+  "spiritual",
+  "faith",
+  "violence",
+  "weapon",
+  "gun",
+  "kill",
+  "murder",
+  "drug",
+  "alcohol",
+  "substance abuse",
+  "gambling",
+  "casino",
+  "betting",
+  "lottery",
+  "cryptocurrency",
+  "crypto",
+  "bitcoin",
+  "blockchain",
+  "investment advice",
+  "financial advice",
+  "trading",
+  "medical",
+  "health",
+  "disease",
+  "treatment",
+  "legal advice",
+  "lawyer",
+  "attorney",
+  "lawsuit",
 ];
 
 // Bypass attempt keywords
 const BYPASS_KEYWORDS = [
-  'ignore', 'bypass', 'override', 'disregard', 'skip',
-  'forget', 'pretend', 'act as', 'roleplay', 'simulate',
-  'you are now', 'from now on', 'new instructions',
-  'system prompt', 'developer mode', 'jailbreak',
-  'do anything', 'no restrictions', 'unrestricted'
+  "ignore",
+  "bypass",
+  "override",
+  "disregard",
+  "skip",
+  "forget",
+  "pretend",
+  "act as",
+  "roleplay",
+  "simulate",
+  "you are now",
+  "from now on",
+  "new instructions",
+  "system prompt",
+  "developer mode",
+  "jailbreak",
+  "do anything",
+  "no restrictions",
+  "unrestricted",
 ];
 
 // Tax-related keywords (positive indicators)
 const TAX_KEYWORDS = [
-  'tax', 'taxation', 'income', 'profit', 'gain', 'revenue',
-  'deduction', 'allowance', 'exemption', 'relief',
-  'vat', 'value added tax', 'stamp duty', 'duty',
-  'petroleum', 'hydrocarbon', 'royalty',
-  'company', 'individual', 'resident', 'non-resident',
-  'chargeable', 'assessable', 'taxable',
-  'calculation', 'compute', 'evaluate', 'calculate'
+  "tax",
+  "taxation",
+  "income",
+  "profit",
+  "gain",
+  "revenue",
+  "deduction",
+  "allowance",
+  "exemption",
+  "relief",
+  "vat",
+  "value added tax",
+  "stamp duty",
+  "duty",
+  "petroleum",
+  "hydrocarbon",
+  "royalty",
+  "company",
+  "individual",
+  "resident",
+  "non-resident",
+  "chargeable",
+  "assessable",
+  "taxable",
+  "calculation",
+  "compute",
+  "evaluate",
+  "calculate",
 ];
 
 /**
@@ -46,7 +119,7 @@ const TAX_KEYWORDS = [
  */
 export function containsBlockedTopics(prompt: string): boolean {
   const lowerPrompt = prompt.toLowerCase();
-  return BLOCKED_TOPICS.some(topic => lowerPrompt.includes(topic));
+  return BLOCKED_TOPICS.some((topic) => lowerPrompt.includes(topic));
 }
 
 /**
@@ -54,7 +127,7 @@ export function containsBlockedTopics(prompt: string): boolean {
  */
 export function attemptsBypass(prompt: string): boolean {
   const lowerPrompt = prompt.toLowerCase();
-  return BYPASS_KEYWORDS.some(keyword => lowerPrompt.includes(keyword));
+  return BYPASS_KEYWORDS.some((keyword) => lowerPrompt.includes(keyword));
 }
 
 /**
@@ -62,7 +135,7 @@ export function attemptsBypass(prompt: string): boolean {
  */
 export function isTaxRelated(prompt: string): boolean {
   const lowerPrompt = prompt.toLowerCase();
-  return TAX_KEYWORDS.some(keyword => lowerPrompt.includes(keyword));
+  return TAX_KEYWORDS.some((keyword) => lowerPrompt.includes(keyword));
 }
 
 /**
@@ -100,38 +173,41 @@ export function guardPrompt(prompt: string): string | null {
  */
 export async function readTaxActPDF(): Promise<string> {
   // Import pdfjs-dist
-  const pdfjsLib = await import('pdfjs-dist');
-  
+  const pdfjsLib = await import("pdfjs-dist");
+
   // Configure worker for browser environment using CDN
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
   }
 
   // Fetch PDF file - using import.meta.url for proper Vite asset resolution
-  const pdfUrl = new URL('../docs/Nigeria-Tax-Act-2025-1.pdf', import.meta.url).href;
+  const pdfUrl = new URL("../docs/Nigeria-Tax-Act-2025-1.pdf", import.meta.url)
+    .href;
   const response = await fetch(pdfUrl);
-  
+
   if (!response.ok) {
-    throw new Error(`Failed to load PDF: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to load PDF: ${response.status} ${response.statusText}`
+    );
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  
+
   // Load and parse PDF
   const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
   const pdf = await loadingTask.promise;
-  
+
   // Extract text from all pages
-  let fullText = '';
+  let fullText = "";
   const numPages = pdf.numPages;
 
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
     const pageText = textContent.items
-      .map((item) => ('str' in item ? item.str : ''))
-      .join(' ');
-    fullText += pageText + '\n\n';
+      .map((item) => ("str" in item ? item.str : ""))
+      .join(" ");
+    fullText += pageText + "\n\n";
   }
 
   return fullText.trim();
@@ -149,7 +225,7 @@ export async function getTaxActContent(): Promise<string> {
   if (pdfContentCache) {
     return pdfContentCache;
   }
-  
+
   pdfContentCache = await readTaxActPDF();
   return pdfContentCache;
 }
@@ -159,11 +235,11 @@ export async function getTaxActContent(): Promise<string> {
  */
 export async function buildSystemPrompt(): Promise<string> {
   const taxActContent = await getTaxActContent();
-  
+
   return `You are a specialized tax assistant for the Nigeria Tax Act 2025. Your primary function is to help users understand, evaluate, and calculate taxes based on the provisions of the Nigeria Tax Act 2025.
 
 CONTEXT - NIGERIA TAX ACT 2025:
-${taxActContent.substring(0, 50000)}${taxActContent.length > 50000 ? '...\n[Document continues]' : ''}
+${taxActContent.substring(0, 50000)}${taxActContent.length > 50000 ? "...\n[Document continues]" : ""}
 
 INSTRUCTIONS:
 1. You MUST base all responses strictly on the Nigeria Tax Act 2025 document provided above.
@@ -197,21 +273,25 @@ Remember: Your expertise is limited to the Nigeria Tax Act 2025. Stay within thi
 /**
  * Build user prompt with guardrails
  */
-export function buildUserPrompt(userInput: string): { prompt: string; blocked: boolean; error?: string } {
+export function buildUserPrompt(userInput: string): {
+  prompt: string;
+  blocked: boolean;
+  error?: string;
+} {
   // Guard the prompt
   const guardResult = guardPrompt(userInput);
-  
+
   if (guardResult) {
     return {
-      prompt: '',
+      prompt: "",
       blocked: true,
-      error: guardResult
+      error: guardResult,
     };
   }
 
   return {
     prompt: userInput,
-    blocked: false
+    blocked: false,
   };
 }
 
@@ -223,10 +303,9 @@ export async function initializePromptPrime(): Promise<void> {
   try {
     await getTaxActContent();
     if (import.meta.env.DEV) {
-      console.log('Prompt Prime initialized: Tax Act document loaded');
+      console.log("Prompt Prime initialized: Tax Act document loaded");
     }
   } catch (error) {
-    console.error('Failed to initialize Prompt Prime:', error);
+    console.error("Failed to initialize Prompt Prime:", error);
   }
 }
-

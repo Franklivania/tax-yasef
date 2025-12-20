@@ -17,7 +17,6 @@
   font-style: normal;
 }
 
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -71,7 +70,7 @@
   --popover-foreground: oklch(0.15 0 0);
   --primary: oklch(0.75 0.15 45);
   --primary-foreground: oklch(0.95 0 0);
-  --secondary: oklch(0.70 0.20 10);
+  --secondary: oklch(0.7 0.2 10);
   --secondary-foreground: oklch(0.95 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -105,7 +104,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.80 0.12 50);
+  --primary: oklch(0.8 0.12 50);
   --primary-foreground: oklch(0.15 0 0);
   --secondary: oklch(0.75 0.18 15);
   --secondary-foreground: oklch(0.95 0 0);
@@ -124,7 +123,7 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.80 0.12 50);
+  --sidebar-primary: oklch(0.8 0.12 50);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -191,11 +190,13 @@
 
 .gradient-border {
   border: 0.25em solid;
-  border-image: linear-gradient(to right, var(--primary), var(--secondary)) 1 round;
+  border-image: linear-gradient(to right, var(--primary), var(--secondary)) 1
+    round;
 }
 
 .lean-gradient {
-  background: linear-gradient(45deg, var(--background), var(--foreground)) no-repeat;
+  background: linear-gradient(45deg, var(--background), var(--foreground))
+    no-repeat;
   background-size: 200% 200%;
   animation: gradient-animation 15s ease infinite;
 }
@@ -207,7 +208,8 @@
 }
 
 .dark .light-gradient {
-  background: linear-gradient(45deg, var(--background), var(--foreground)) no-repeat;
+  background: linear-gradient(45deg, var(--background), var(--foreground))
+    no-repeat;
   background-size: 200% 200%;
   animation: gradient-animation 15s ease infinite;
 }

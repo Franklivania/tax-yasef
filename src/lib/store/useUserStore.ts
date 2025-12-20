@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { getUserIP, getUserBrowserInfo } from '../user-details';
-import { getCookie, setCookie } from '../utils/cookies';
+import { create } from "zustand";
+import { getUserIP, getUserBrowserInfo } from "../user-details";
+import { getCookie, setCookie } from "../utils/cookies";
 
 type UserStore = {
   userToken: string;
@@ -9,7 +9,7 @@ type UserStore = {
   initialized: boolean;
   initialize: () => Promise<void>;
   getUserIdentifier: () => string;
-}
+};
 
 // Generate a unique user token
 const generateUserToken = (): string => {
@@ -20,18 +20,18 @@ const generateUserToken = (): string => {
 
 // Get or create user token from cookies
 const getCookieToken = (): string => {
-  const COOKIE_NAME = 'tax-yasef-user-token';
+  const COOKIE_NAME = "tax-yasef-user-token";
   const stored = getCookie(COOKIE_NAME);
-  
+
   if (stored) return stored;
-  
+
   const token = generateUserToken();
   setCookie(COOKIE_NAME, token, {
     days: 7,
-    sameSite: 'Lax',
+    sameSite: "Lax",
     secure: true,
   });
-  
+
   return token;
 };
 
@@ -40,20 +40,20 @@ export const useUserStore = create<UserStore>((set, get) => ({
   ipAddress: null,
   browserInfo: null,
   initialized: false,
-  
+
   initialize: async () => {
     if (get().initialized) return;
-    
+
     const ip = await getUserIP();
     const browserInfo = getUserBrowserInfo();
-    
+
     set({
       ipAddress: ip,
       browserInfo,
       initialized: true,
     });
   },
-  
+
   getUserIdentifier: () => {
     const state = get();
     if (state.ipAddress) {
@@ -63,7 +63,6 @@ export const useUserStore = create<UserStore>((set, get) => ({
   },
 }));
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   useUserStore.getState().initialize();
 }
-
