@@ -4,6 +4,8 @@ import { ThemeSwitcher } from "@/components/layout/chat-header";
 import { Button } from "./components/ui/button";
 import { useNavigate } from "react-router-dom";
 import ChatInput from "./components/atoms/chat-input";
+import { Button } from "./components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 function App() {
   const navigate = useNavigate();
