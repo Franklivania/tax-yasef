@@ -35,7 +35,7 @@ export function parseMarkdown(content: string): MarkdownNode[] {
         result.push(
           <pre
             key={`code-${result.length}`}
-            className="bg-muted rounded-lg p-4 overflow-x-auto my-4"
+            className="bg-muted rounded-lg p-2 md:p-4 overflow-x-auto my-2 md:my-4 text-xs md:text-sm"
           >
             <code className={language ? `language-${language}` : ""}>
               {codeContent}
@@ -63,7 +63,10 @@ export function parseMarkdown(content: string): MarkdownNode[] {
     // Handle horizontal rules
     if (/^[-*_]{3,}$/.test(line.trim())) {
       result.push(
-        <hr key={`hr-${result.length}`} className="my-6 border-border" />
+        <hr
+          key={`hr-${result.length}`}
+          className="my-3 md:my-6 border-border"
+        />
       );
       i++;
       continue;
@@ -77,15 +80,16 @@ export function parseMarkdown(content: string): MarkdownNode[] {
         headingMatch[2],
         `heading-${result.length}`
       );
+      // Responsive heading sizes - smaller on mobile
       const className =
         {
-          1: "text-4xl font-bold my-6",
-          2: "text-3xl font-bold my-5",
-          3: "text-2xl font-semibold my-4",
-          4: "text-xl font-semibold my-3",
-          5: "text-lg font-semibold my-2",
-          6: "text-base font-semibold my-2",
-        }[level] || "text-base font-semibold my-2";
+          1: "text-2xl md:text-4xl font-bold my-4 md:my-6",
+          2: "text-xl md:text-3xl font-bold my-3 md:my-5",
+          3: "text-lg md:text-2xl font-semibold my-2 md:my-4",
+          4: "text-base md:text-xl font-semibold my-2 md:my-3",
+          5: "text-sm md:text-lg font-semibold my-1 md:my-2",
+          6: "text-sm md:text-base font-semibold my-1 md:my-2",
+        }[level] || "text-sm md:text-base font-semibold my-1 md:my-2";
 
       const HeadingComponent = React.createElement(
         `h${level}`,
@@ -108,7 +112,7 @@ export function parseMarkdown(content: string): MarkdownNode[] {
       result.push(
         <blockquote
           key={`quote-${result.length}`}
-          className="border-l-4 border-muted-foreground pl-4 my-4 italic text-muted-foreground"
+          className="border-l-4 border-muted-foreground pl-2 md:pl-4 my-2 md:my-4 italic text-muted-foreground text-sm md:text-base"
         >
           {parseInlineMarkdown(quoteContent, `quote-${result.length}`)}
         </blockquote>
@@ -161,7 +165,7 @@ export function parseMarkdown(content: string): MarkdownNode[] {
     if (paragraphLines.length > 0) {
       const paragraphText = paragraphLines.join("\n");
       result.push(
-        <p key={`p-${result.length}`} className="my-3 leading-relaxed">
+        <p key={`p-${result.length}`} className="my-2 md:my-3 leading-relaxed">
           {parseInlineMarkdown(paragraphText, `p-${result.length}`)}
         </p>
       );
@@ -362,14 +366,18 @@ function parseTable(lines: string[], startIndex: number): TableResult | null {
 
   return {
     element: (
-      <div key={`table-${startIndex}`} className="my-4 overflow-x-auto">
-        <table className="min-w-full border-collapse border border-border">
+      <div
+        key={`table-${startIndex}`}
+        className="my-4 overflow-x-auto md:overflow-x-visible -mx-2.5 md:mx-0 w-[calc(100%+1.25rem)] md:w-full"
+        style={{ scrollbarWidth: "thin" }}
+      >
+        <table className="min-w-full border-collapse border border-border text-xs md:text-sm">
           <thead>
             <tr>
               {rows[0].map((cell, idx) => (
                 <th
                   key={`th-${idx}`}
-                  className="border border-border px-4 py-2 text-left font-semibold bg-muted"
+                  className="border border-border px-2 md:px-4 py-1.5 md:py-2 text-left font-semibold bg-muted whitespace-nowrap md:whitespace-normal"
                 >
                   {parseInlineMarkdown(cell, `table-${startIndex}-th-${idx}`)}
                 </th>
@@ -382,7 +390,7 @@ function parseTable(lines: string[], startIndex: number): TableResult | null {
                 {row.map((cell, cellIdx) => (
                   <td
                     key={`td-${rowIdx}-${cellIdx}`}
-                    className="border border-border px-4 py-2"
+                    className="border border-border px-2 md:px-4 py-1.5 md:py-2 whitespace-nowrap md:whitespace-normal"
                   >
                     {parseInlineMarkdown(
                       cell,

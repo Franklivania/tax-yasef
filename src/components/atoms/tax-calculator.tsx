@@ -154,7 +154,6 @@ export default function TaxCalculator() {
                   icon="material-symbols:delete-outline"
                   className="size-4"
                 />
-                <span className="text-base font-nunito">Clear History</span>
               </Button>
             )}
 
