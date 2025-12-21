@@ -48,13 +48,13 @@ export default function ChatInput() {
 
   return (
     <div className="w-full p-1 rounded-3xl light-gradient">
-      <div className="w-full h-full bg-muted rounded-3xl p-6 grid gap-3">
+      <div className="w-full h-full bg-muted rounded-2xl p-6 grid gap-3">
         <div className="w-full flex items-start gap-2">
           <textarea
             ref={textareaRef}
             value={value}
             onChange={handleChange}
-            className="w-full resize-none outline-none border-none no-scrollbar min-h-10 font-nunito"
+            className="w-full resize-none outline-none border-none no-scrollbar min-h-10 font-nunito text-foreground"
             style={{ maxHeight: "250px" }}
             placeholder="Make we talk this Nigerian Tax thing..."
           />

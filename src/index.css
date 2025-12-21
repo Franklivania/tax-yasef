@@ -141,7 +141,14 @@
   }
 }
 
-.no-scrollbar {
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+x .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -218,6 +225,7 @@
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
