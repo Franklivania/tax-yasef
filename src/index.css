@@ -22,6 +22,22 @@ body {
   overflow: hidden;
   width: 100%;
   height: 100vh;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* Prevent horizontal overflow on mobile */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure proper word breaking on mobile */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
 }
 
 @theme inline {

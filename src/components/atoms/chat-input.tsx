@@ -142,12 +142,17 @@ export default function ChatInput({
   };
 
   return (
-    <div className="w-full p-1 rounded-3xl light-gradient">
+    <div
+      className="w-full p-1 rounded-3xl light-gradient"
+      style={{ minWidth: 0, maxWidth: "100%" }}
+    >
       <div
         className={`w-full h-full bg-muted rounded-2xl grid ${isMobile ? "p-2.5 gap-2" : "p-3 md:p-6 gap-3"}`}
+        style={{ minWidth: 0, maxWidth: "100%" }}
       >
         <div
           className={`w-full flex items-start ${isMobile ? "gap-1.5" : "gap-2"}`}
+          style={{ minWidth: 0 }}
         >
           <textarea
             ref={textareaRef}
@@ -158,7 +163,12 @@ export default function ChatInput({
             className={`w-full resize-none outline-none border-none muted-scrollbar font-nunito text-foreground disabled:opacity-50 ${
               isMobile ? "min-h-8 text-sm" : "min-h-10 text-base"
             }`}
-            style={{ maxHeight: isMobile ? "150px" : "250px" }}
+            style={{
+              maxHeight: isMobile ? "150px" : "250px",
+              minWidth: 0,
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
+            }}
             placeholder="Make we talk this Nigerian Tax thing..."
           />
           <button

@@ -129,7 +129,8 @@ export default function MessageDisplay({
   return (
     <div
       ref={containerRef}
-      className={`w-full min-h-full bg-transparent grid pb-4 overflow-x-hidden ${isMobile ? "gap-2" : "gap-3"}`}
+      className={`w-full min-h-full bg-transparent flex flex-col pb-4 overflow-x-hidden ${isMobile ? "gap-2" : "gap-3"}`}
+      style={{ minWidth: 0 }}
     >
       {messages.map((message) => {
         if (message.role === "user") {
@@ -139,16 +140,26 @@ export default function MessageDisplay({
           return (
             <div
               key={message.id}
-              className={`flex flex-col justify-self-end ${isMobile ? "w-[95%]" : "w-max"}`}
+              className={`flex flex-col self-end ${isMobile ? "w-max max-w-[calc(100%-1rem)]" : "w-max max-w-xl"}`}
+              style={{ minWidth: 0 }}
             >
               <div
-                className={`w-full ${isMobile ? "max-w-full" : "md:w-max md:max-w-xl"} h-max rounded-3xl bg-primary text-primary-foreground flex flex-col ${
+                className={`w-full h-max rounded-3xl bg-primary text-primary-foreground flex flex-col ${
                   isMobile ? "p-2.5" : "p-3"
                 }`}
+                style={{
+                  minWidth: 0,
+                  wordWrap: "break-word",
+                  overflowWrap: "break-word",
+                }}
               >
                 <p
                   className={`font-nunito whitespace-pre-wrap ${isMobile ? "text-sm" : "text-base"}`}
-                  style={{ wordBreak: "break-word" }}
+                  style={{
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word",
+                    hyphens: "auto",
+                  }}
                 >
                   {message.content}
                 </p>
@@ -194,7 +205,8 @@ export default function MessageDisplay({
         return (
           <div
             key={message.id}
-            className={`w-full flex items-start overflow-hidden ${isMobile ? "gap-1.5" : "gap-2"}`}
+            className={`w-full flex items-start ${isMobile ? "gap-1.5" : "gap-2"}`}
+            style={{ minWidth: 0 }}
           >
             <Image
               src="/favicon.ico"
@@ -203,18 +215,32 @@ export default function MessageDisplay({
               height={isMobile ? 24 : 32}
               className="mt-1 shrink-0"
             />
-            <div className="flex-1 flex flex-col gap-2 min-w-0 overflow-hidden">
+            <div
+              className="flex-1 flex flex-col gap-2 min-w-0"
+              style={{ maxWidth: "100%" }}
+            >
               <article
-                className={`w-full h-max rounded-3xl bg-background text-foreground border border-border overflow-hidden ${
-                  isMobile ? "p-2.5 max-w-[98%]" : "p-3 max-w-full"
+                className={`w-full h-max rounded-3xl bg-background text-foreground border border-border ${
+                  isMobile ? "p-2.5" : "p-3"
                 }`}
+                style={{
+                  minWidth: 0,
+                  wordWrap: "break-word",
+                  overflowWrap: "break-word",
+                }}
               >
                 <div
-                  className={`prose max-w-none font-nunito ${
+                  className={`prose prose-sm max-w-none font-nunito ${
                     isMobile
-                      ? "prose-sm prose-headings:text-base prose-headings:font-semibold prose-p:text-sm prose-p:my-2 prose-ul:text-sm prose-ol:text-sm prose-li:text-sm"
-                      : "prose-sm"
+                      ? "prose-headings:text-base prose-headings:font-semibold prose-p:text-sm prose-p:my-2 prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-table:text-sm"
+                      : ""
                   }`}
+                  style={{
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word",
+                    maxWidth: "100%",
+                    width: "100%",
+                  }}
                 >
                   {parseMarkdown(message.content)}
                 </div>
