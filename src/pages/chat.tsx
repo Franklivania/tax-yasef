@@ -5,13 +5,17 @@ import {
   startTransition,
   useCallback,
 } from "react";
+import { lazy, Suspense } from "react";
 import ChatInput from "@/components/atoms/chat-input";
-import MessageDisplay from "@/components/atoms/message-display";
-import TaxCalculator from "@/components/atoms/tax-calculator";
 import ChatHeader from "@/components/layout/chat-header";
 import NotificationBanner from "@/components/atoms/notification-banner";
 import TokenUsageNotification from "@/components/atoms/token-usage-notification";
 import { OfflineIndicator } from "@/components/accessibility/offline-indicator";
+import Loader from "@/components/ui/loader";
+
+// Lazy load heavy components for code splitting
+const MessageDisplay = lazy(() => import("@/components/atoms/message-display"));
+const TaxCalculator = lazy(() => import("@/components/atoms/tax-calculator"));
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
 import { useOpen } from "@/lib/hooks/useOpen";
 import { useMessageStore } from "@/lib/store/useMessageStore";
@@ -253,7 +257,15 @@ export default function ChatDisplay() {
             }`}
             style={{ minWidth: 0 }}
           >
-            <MessageDisplay onRegenerate={() => setLoading(true)} />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-12">
+                  <Loader className="size-8" />
+                </div>
+              }
+            >
+              <MessageDisplay onRegenerate={() => setLoading(true)} />
+            </Suspense>
           </section>
         </div>
 
@@ -353,7 +365,15 @@ export default function ChatDisplay() {
                 className={isMobile ? "size-4" : "size-5"}
               />
             </Button>
-            <TaxCalculator />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-full">
+                  <Loader className="size-8" />
+                </div>
+              }
+            >
+              <TaxCalculator />
+            </Suspense>
           </div>
         )}
       </aside>
