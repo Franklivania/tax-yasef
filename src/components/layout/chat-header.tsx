@@ -23,8 +23,11 @@ export default function ChatHeader({
   const { isMobile } = useDeviceSize();
 
   return (
-    <header className="w-full bg-transparent flex items-center justify-between">
-      <div className={isMobile ? "w-8 h-8" : "w-12 h-12"}>
+    <header
+      className="w-full bg-transparent flex items-center justify-between"
+      style={{ minWidth: 0, maxWidth: "100%" }}
+    >
+      <div className={`shrink-0 ${isMobile ? "w-8 h-8" : "w-12 h-12"}`}>
         {isDark() ? (
           <Image
             src="/logo-dark.svg"
@@ -36,7 +39,10 @@ export default function ChatHeader({
         )}
       </div>
 
-      <aside className="flex items-center gap-1 md:gap-2">
+      <aside
+        className="flex items-center gap-1 md:gap-2 shrink-0"
+        style={{ minWidth: 0 }}
+      >
         <InfoModal>
           <Button
             variant="ghost"
