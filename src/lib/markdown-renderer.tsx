@@ -1,4 +1,5 @@
 import React from "react";
+import { sanitizeURL, isValidURL, escapeHTML } from "./utils/security";
 
 type MarkdownNode = React.ReactElement | string | null;
 
@@ -206,29 +207,47 @@ function parseInlineMarkdown(
     // Links [text](url) or [text](url "title")
     {
       regex: /\[([^\]]+)\]\(([^)]+)\)/g,
-      handler: (match) => (
-        <a
-          key={`${keyPrefix}-link-${keyCounter++}`}
-          href={match[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary underline hover:text-primary/80"
-        >
-          {parseInlineMarkdown(match[1], `${keyPrefix}-link-${keyCounter}`)}
-        </a>
-      ),
+      handler: (match) => {
+        const url = sanitizeURL(match[2]);
+        if (!url || !isValidURL(url)) {
+          // If URL is invalid, return plain text
+          return (
+            <span key={`${keyPrefix}-link-${keyCounter++}`}>
+              {parseInlineMarkdown(match[1], `${keyPrefix}-link-${keyCounter}`)}
+            </span>
+          );
+        }
+        return (
+          <a
+            key={`${keyPrefix}-link-${keyCounter++}`}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline hover:text-primary/80"
+          >
+            {parseInlineMarkdown(match[1], `${keyPrefix}-link-${keyCounter}`)}
+          </a>
+        );
+      },
     },
     // Images ![alt](url)
     {
       regex: /!\[([^\]]*)\]\(([^)]+)\)/g,
-      handler: (match) => (
-        <img
-          key={`${keyPrefix}-img-${keyCounter++}`}
-          src={match[2]}
-          alt={match[1]}
-          className="max-w-full h-auto my-4 rounded-lg"
-        />
-      ),
+      handler: (match) => {
+        const url = sanitizeURL(match[2]);
+        if (!url || !isValidURL(url)) {
+          return <React.Fragment key={`${keyPrefix}-img-${keyCounter++}`} />;
+        }
+        return (
+          <img
+            key={`${keyPrefix}-img-${keyCounter++}`}
+            src={url}
+            alt={escapeHTML(match[1] || "")}
+            className="max-w-full h-auto my-4 rounded-lg"
+            loading="lazy"
+          />
+        );
+      },
     },
     // Bold **text** or __text__
     {

@@ -5,6 +5,9 @@
 
 import { useModelStore } from "../store/useModelStore";
 import { useTokenUsageStore } from "../store/useTokenUsageStore";
+import { checkRateLimit } from "../utils/rate-limiter";
+import { getCSRFHeader } from "../utils/csrf";
+import { sanitizeInput, containsDangerousContent } from "../utils/security";
 
 // Type definitions matching backend
 interface GroqRequest {
@@ -65,15 +68,39 @@ const createCompletion = async (
   prompt: string,
   systemPrompt?: string
 ): Promise<string> => {
+  // Sanitize input to prevent XSS
+  const sanitizedPrompt = sanitizeInput(prompt);
+
+  // Check for dangerous content
+  if (containsDangerousContent(sanitizedPrompt)) {
+    throw new Error(
+      "Input contains potentially dangerous content. Please try again."
+    );
+  }
+
   const tokenStore = useTokenUsageStore.getState();
   const modelStore = useModelStore.getState();
   const currentModel = modelStore.model;
 
   tokenStore.resetIfNeeded();
 
+  // Frontend rate limiting (per model)
+  const rateLimitResult = checkRateLimit({
+    maxRequests: 30, // 30 requests per window
+    windowMs: 60000, // 1 minute window
+    key: `api-${currentModel}`,
+  });
+
+  if (!rateLimitResult.allowed) {
+    const resetInSeconds = Math.ceil(rateLimitResult.resetIn / 1000);
+    throw new TokenLimitError(
+      `Rate limit exceeded. Please wait ${resetInSeconds} seconds before trying again.`
+    );
+  }
+
   const fullPrompt = systemPrompt
-    ? `${systemPrompt}\n\nUser: ${prompt}\n\nAssistant:`
-    : prompt;
+    ? `${systemPrompt}\n\nUser: ${sanitizedPrompt}\n\nAssistant:`
+    : sanitizedPrompt;
   const estimatedTokens = estimateTokens(fullPrompt) + 2500;
 
   // Check token limits before making request
@@ -96,13 +123,18 @@ const createCompletion = async (
       presence_penalty: 0,
     };
 
+    // Get CSRF token header
+    const csrfHeaders = getCSRFHeader();
+
     // Call backend API (secure - API key is on server)
     const response = await fetch(getApiUrl(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...csrfHeaders,
       },
       body: JSON.stringify(requestBody),
+      credentials: "same-origin", // Include cookies for CSRF
     });
 
     // Handle non-OK responses
