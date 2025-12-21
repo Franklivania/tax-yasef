@@ -1,22 +1,53 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import App from "./App";
-import ChatDisplay from "./pages/chat";
-import NotFound from "./pages/_not-found";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  type RouteObject,
+} from "react-router-dom";
+import { Suspense, lazy } from "react";
+import LoadingScreen from "./pages/_loading";
 
-const router = createBrowserRouter([
+// Lazy load all route components for code splitting
+const App = lazy(() => import("./App"));
+const ChatDisplay = lazy(() => import("./pages/chat"));
+const NotFound = lazy(() => import("./pages/_not-found"));
+
+const routes: RouteObject[] = [
   {
     path: "/",
-    element: <App />,
+    element: (
+      <Suspense fallback={<LoadingScreen />}>
+        <App />
+      </Suspense>
+    ),
   },
   {
     path: "/chat",
-    element: <ChatDisplay />,
+    element: (
+      <Suspense fallback={<LoadingScreen />}>
+        <ChatDisplay />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/loading",
+    element: <LoadingScreen />,
   },
   {
     path: "*",
-    element: <NotFound />,
+    element: (
+      <Suspense fallback={<LoadingScreen />}>
+        <NotFound />
+      </Suspense>
+    ),
   },
-]);
+];
+
+const router = createBrowserRouter(routes, {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  },
+});
 
 export function Router() {
   return <RouterProvider router={router} />;
