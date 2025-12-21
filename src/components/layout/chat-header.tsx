@@ -11,6 +11,7 @@ import {
 import { Icon } from "@iconify/react";
 import InfoModal from "../modals/info-modal";
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
+import { SROnly } from "../accessibility/sr-only";
 
 export default function ChatHeader({
   setOpen,
@@ -99,32 +100,44 @@ export function ThemeSwitcher() {
   };
 
   return (
-    <Select
-      value={theme}
-      onValueChange={(value: string) => setTheme(value as Themes)}
-    >
-      <SelectTrigger className="w-[70px]">
-        <SelectValue>
-          <div className="flex items-center gap-2">
-            <Icon icon={getThemeIcon(theme)} />
-            <span>{getThemeLabel(theme)}</span>
-          </div>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="dark">
-          <Icon icon="material-symbols-light:dark-mode-rounded" />
-          <span>Dark mode</span>
-        </SelectItem>
-        <SelectItem value="light">
-          <Icon icon="ix:light-dark" />
-          <span>Light mode</span>
-        </SelectItem>
-        <SelectItem value="system">
-          <Icon icon="mingcute:laptop-line" />
-          <span>System</span>
-        </SelectItem>
-      </SelectContent>
-    </Select>
+    <>
+      <SROnly>
+        <label htmlFor="theme-select">Select theme</label>
+      </SROnly>
+      <Select
+        value={theme}
+        onValueChange={(value: string) => setTheme(value as Themes)}
+      >
+        <SelectTrigger
+          id="theme-select"
+          className="w-[70px]"
+          aria-label={`Current theme: ${getThemeLabel(theme)}`}
+        >
+          <SelectValue>
+            <div className="flex items-center gap-2">
+              <Icon icon={getThemeIcon(theme)} aria-hidden="true" />
+              <span>{getThemeLabel(theme)}</span>
+            </div>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="dark" aria-label="Dark mode">
+            <Icon
+              icon="material-symbols-light:dark-mode-rounded"
+              aria-hidden="true"
+            />
+            <span>Dark mode</span>
+          </SelectItem>
+          <SelectItem value="light" aria-label="Light mode">
+            <Icon icon="ix:light-dark" aria-hidden="true" />
+            <span>Light mode</span>
+          </SelectItem>
+          <SelectItem value="system" aria-label="System theme">
+            <Icon icon="mingcute:laptop-line" aria-hidden="true" />
+            <span>System</span>
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </>
   );
 }

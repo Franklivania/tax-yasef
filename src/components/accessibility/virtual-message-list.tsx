@@ -1,4 +1,9 @@
-import { useRef, useState } from "react";
+/**
+ * Virtual Message List Component
+ * Efficiently renders long message lists using virtual scrolling
+ */
+
+import { useRef, useEffect, useState, useMemo } from "react";
 import { useMessageStore } from "@/lib/store/useMessageStore";
 import { Image } from "../ui/image";
 import { parseMarkdown } from "@/lib/markdown-renderer";
@@ -10,13 +15,59 @@ import { buildCalculationsContext } from "@/lib/utils/calculations-context";
 import { useNotificationStore } from "@/lib/store/useNotificationStore";
 import { useModelStore } from "@/lib/store/useModelStore";
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
-import { SROnly } from "../accessibility/sr-only";
+import { SROnly } from "./sr-only";
 
-export default function MessageDisplay({
-  onRegenerate,
-}: {
+interface VirtualMessageListProps {
   onRegenerate?: () => void;
-}) {
+  /**
+   * Height of each message item in pixels (estimated)
+   */
+  itemHeight?: number;
+  /**
+   * Number of items to render outside viewport (buffer)
+   */
+  overscan?: number;
+}
+
+interface VirtualItem {
+  index: number;
+  offset: number;
+  height: number;
+}
+
+/**
+ * Calculate virtual items to render based on scroll position
+ */
+function calculateVirtualItems(
+  containerHeight: number,
+  scrollTop: number,
+  itemCount: number,
+  itemHeight: number,
+  overscan: number
+): VirtualItem[] {
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
+  const endIndex = Math.min(
+    itemCount - 1,
+    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
+  );
+
+  const items: VirtualItem[] = [];
+  for (let i = startIndex; i <= endIndex; i++) {
+    items.push({
+      index: i,
+      offset: i * itemHeight,
+      height: itemHeight,
+    });
+  }
+
+  return items;
+}
+
+export default function VirtualMessageList({
+  onRegenerate,
+  itemHeight = 100,
+  overscan = 3,
+}: VirtualMessageListProps) {
   const messages = useMessageStore((state) => state.getMessages());
   const isLoading = useMessageStore((state) => state.isLoading);
   const setLoading = useMessageStore((state) => state.setLoading);
@@ -27,8 +78,54 @@ export default function MessageDisplay({
   const model = useModelStore((state) => state.model);
   const { isMobile } = useDeviceSize();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
+
+  // Update container height on resize
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  // Handle scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      setScrollTop(container.scrollTop);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  // Calculate virtual items
+  const virtualItems = useMemo(() => {
+    if (messages.length === 0) return [];
+    return calculateVirtualItems(
+      containerHeight || 1000,
+      scrollTop,
+      messages.length,
+      itemHeight,
+      overscan
+    );
+  }, [messages.length, containerHeight, scrollTop, itemHeight, overscan]);
 
   // Check if last message is user message (indicating we're waiting for response)
   const isWaitingForResponse =
@@ -55,7 +152,6 @@ export default function MessageDisplay({
 
     if (!lastUserMessage) return;
 
-    // Remove the last assistant response if it exists
     const lastMessage = messages[messages.length - 1];
     if (lastMessage.role === "assistant") {
       const newMessages = messages.slice(0, -1);
@@ -107,7 +203,6 @@ export default function MessageDisplay({
     }
   };
 
-  // Check if this is the last user message
   const isLastUserMessage = (messageId: string) => {
     const lastUserMsg = [...messages]
       .reverse()
@@ -119,7 +214,9 @@ export default function MessageDisplay({
     return (
       <div className="w-full min-h-full bg-transparent flex items-center justify-center pb-4">
         <p
-          className={`text-muted-foreground font-nunito text-center ${isMobile ? "text-sm px-2" : "text-base"}`}
+          className={`text-muted-foreground font-nunito text-center ${
+            isMobile ? "text-sm px-2" : "text-base"
+          }`}
         >
           Start a conversation about Nigerian Tax Act 2025
         </p>
@@ -127,13 +224,35 @@ export default function MessageDisplay({
     );
   }
 
+  const totalHeight = messages.length * itemHeight;
+  const startOffset = virtualItems[0]?.offset || 0;
+  const endOffset = virtualItems[virtualItems.length - 1]?.offset || 0;
+
   return (
     <div
       ref={containerRef}
-      className={`w-full min-h-full bg-transparent flex flex-col pb-4 overflow-x-hidden ${isMobile ? "gap-2" : "gap-3"}`}
-      style={{ minWidth: 0 }}
+      className="w-full min-h-full bg-transparent grid pb-4 overflow-x-hidden relative"
+      style={{ minHeight: totalHeight }}
+      role="log"
+      aria-label="Chat messages"
+      aria-live="polite"
+      aria-atomic="false"
     >
-      {messages.map((message) => {
+      <SROnly>
+        {messages.length} message{messages.length !== 1 ? "s" : ""} in
+        conversation
+      </SROnly>
+
+      {/* Spacer for items before viewport */}
+      {startOffset > 0 && (
+        <div style={{ height: startOffset }} aria-hidden="true" />
+      )}
+
+      {/* Render visible items */}
+      {virtualItems.map((virtualItem) => {
+        const message = messages[virtualItem.index];
+        if (!message) return null;
+
         if (message.role === "user") {
           const canRefresh = isLastUserMessage(message.id);
           const isCopied = copiedId === message.id;
@@ -141,35 +260,34 @@ export default function MessageDisplay({
           return (
             <div
               key={message.id}
-              className={`flex flex-col self-end ${isMobile ? "w-max max-w-[calc(100%-1rem)]" : "w-max max-w-xl"}`}
-              style={{ minWidth: 0 }}
+              className={`flex flex-col justify-self-end ${
+                isMobile ? "w-[95%]" : "w-max"
+              }`}
+              style={{ minHeight: itemHeight }}
               role="article"
-              aria-label={`User message ${messages.indexOf(message) + 1} of ${messages.length}`}
+              aria-label={`User message ${virtualItem.index + 1}`}
             >
               <div
-                className={`w-full h-max rounded-3xl bg-primary text-primary-foreground flex flex-col ${
+                className={`w-full ${
+                  isMobile ? "max-w-full" : "md:w-max md:max-w-xl"
+                } h-max rounded-3xl bg-primary text-primary-foreground flex flex-col ${
                   isMobile ? "p-2.5" : "p-3"
                 }`}
-                style={{
-                  minWidth: 0,
-                  wordWrap: "break-word",
-                  overflowWrap: "break-word",
-                }}
               >
                 <p
-                  className={`font-nunito whitespace-pre-wrap ${isMobile ? "text-sm" : "text-base"}`}
-                  style={{
-                    wordBreak: "break-word",
-                    overflowWrap: "break-word",
-                    hyphens: "auto",
-                  }}
+                  className={`font-nunito whitespace-pre-wrap ${
+                    isMobile ? "text-sm" : "text-base"
+                  }`}
+                  style={{ wordBreak: "break-word" }}
                 >
                   {message.content}
                 </p>
               </div>
 
               <div
-                className={`ml-auto mr-3 mt-1.5 flex items-center gap-1.5 text-muted-foreground ${isMobile ? "gap-1" : "gap-2"}`}
+                className={`ml-auto mr-3 mt-1.5 flex items-center gap-1.5 text-muted-foreground ${
+                  isMobile ? "gap-1" : "gap-2"
+                }`}
               >
                 {canRefresh && (
                   <button
@@ -177,11 +295,12 @@ export default function MessageDisplay({
                     disabled={regenerating}
                     className="hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Regenerate response"
-                    aria-label="Regenerate AI response"
+                    aria-label="Regenerate response"
                   >
                     <RefreshCcw
                       size={isMobile ? 14 : 16}
                       className={regenerating ? "animate-spin" : ""}
+                      aria-hidden="true"
                     />
                   </button>
                 )}
@@ -189,19 +308,16 @@ export default function MessageDisplay({
                   onClick={() => handleCopy(message.content, message.id)}
                   className="hover:text-foreground transition-colors"
                   title={isCopied ? "Copied!" : "Copy message"}
-                  aria-label={
-                    isCopied
-                      ? "Copied to clipboard"
-                      : "Copy message to clipboard"
-                  }
+                  aria-label={isCopied ? "Copied to clipboard" : "Copy message"}
                 >
                   {isCopied ? (
                     <Check
                       size={isMobile ? 14 : 16}
                       className="text-green-500"
+                      aria-hidden="true"
                     />
                   ) : (
-                    <Copy size={isMobile ? 14 : 16} />
+                    <Copy size={isMobile ? 14 : 16} aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -214,10 +330,12 @@ export default function MessageDisplay({
         return (
           <div
             key={message.id}
-            className={`w-full flex items-start ${isMobile ? "gap-1.5" : "gap-2"}`}
-            style={{ minWidth: 0 }}
+            className={`w-full flex items-start overflow-hidden ${
+              isMobile ? "gap-1.5" : "gap-2"
+            }`}
+            style={{ minHeight: itemHeight }}
             role="article"
-            aria-label={`Assistant message ${messages.indexOf(message) + 1} of ${messages.length}`}
+            aria-label={`Assistant message ${virtualItem.index + 1}`}
           >
             <Image
               src="/favicon.ico"
@@ -227,48 +345,32 @@ export default function MessageDisplay({
               className="mt-1 shrink-0"
               aria-hidden="true"
             />
-            <div
-              className="flex-1 flex flex-col gap-2 min-w-0"
-              style={{ maxWidth: "100%" }}
-            >
+            <div className="flex-1 flex flex-col gap-2 min-w-0 overflow-hidden">
               <article
-                className={`w-full h-max rounded-3xl bg-background text-foreground border border-border ${
-                  isMobile ? "p-2.5" : "p-3"
+                className={`w-full h-max rounded-3xl bg-background text-foreground border border-border overflow-hidden ${
+                  isMobile ? "p-2.5 max-w-[98%]" : "p-3 max-w-full"
                 }`}
-                style={{
-                  minWidth: 0,
-                  wordWrap: "break-word",
-                  overflowWrap: "break-word",
-                }}
               >
                 <div
-                  className={`prose prose-sm max-w-none font-nunito ${
+                  className={`prose max-w-none font-nunito ${
                     isMobile
-                      ? "prose-headings:text-base prose-headings:font-semibold prose-p:text-sm prose-p:my-2 prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-table:text-sm"
-                      : ""
+                      ? "prose-sm prose-headings:text-base prose-headings:font-semibold prose-p:text-sm prose-p:my-2 prose-ul:text-sm prose-ol:text-sm prose-li:text-sm"
+                      : "prose-sm"
                   }`}
-                  style={{
-                    wordBreak: "break-word",
-                    overflowWrap: "break-word",
-                    maxWidth: "100%",
-                    width: "100%",
-                  }}
                 >
                   {parseMarkdown(message.content)}
                 </div>
               </article>
               <div
-                className={`flex items-center gap-2 text-muted-foreground ${isMobile ? "ml-1" : "ml-2"}`}
+                className={`flex items-center gap-2 text-muted-foreground ${
+                  isMobile ? "ml-1" : "ml-2"
+                }`}
               >
                 <button
                   onClick={() => handleCopy(message.content, message.id)}
                   className="hover:text-foreground transition-colors"
                   title={isCopied ? "Copied!" : "Copy message"}
-                  aria-label={
-                    isCopied
-                      ? "Copied to clipboard"
-                      : "Copy message to clipboard"
-                  }
+                  aria-label={isCopied ? "Copied to clipboard" : "Copy message"}
                 >
                   {isCopied ? (
                     <Check
@@ -286,13 +388,23 @@ export default function MessageDisplay({
         );
       })}
 
+      {/* Spacer for items after viewport */}
+      {endOffset < totalHeight && (
+        <div
+          style={{ height: totalHeight - endOffset - itemHeight }}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Show loader when waiting for response */}
       {isWaitingForResponse && (
         <div
-          className={`w-full flex items-start ${isMobile ? "gap-1.5" : "gap-2"}`}
+          className={`w-full flex items-start ${
+            isMobile ? "gap-1.5" : "gap-2"
+          }`}
           role="status"
           aria-live="polite"
-          aria-label="Generating response"
+          aria-label="Loading response"
         >
           <Image
             src="/favicon.ico"
@@ -305,7 +417,7 @@ export default function MessageDisplay({
           <article className="w-max h-max mt-0.5">
             <Loader className={isMobile ? "size-3" : "size-6"} />
           </article>
-          <SROnly>Generating response, please wait...</SROnly>
+          <SROnly>Generating response...</SROnly>
         </div>
       )}
     </div>
