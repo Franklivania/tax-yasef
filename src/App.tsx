@@ -1,71 +1,52 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./components/ui/select";
-import { Icon } from "@iconify/react";
-import { type Themes, useThemeStore } from "./lib/store/useThemeStore";
-import ChatInput from "@/components/atoms/chat-input";
+import { useThemeStore } from "./lib/store/useThemeStore";
+import { Image } from "./components/ui/image";
+import { ThemeSwitcher } from "@/components/layout/chat-header";
+import ChatInput from "./components/atoms/chat-input";
 
 function App() {
   const theme = useThemeStore((state) => state.theme);
-  const setTheme = useThemeStore((state) => state.setTheme);
-
-  const getThemeIcon = (themeValue: Themes) => {
-    switch (themeValue) {
-      case "dark":
-        return "material-symbols-light:dark-mode-rounded";
-      case "light":
-        return "ix:light-dark";
-      case "system":
-        return "mingcute:laptop-line";
-    }
-  };
-
-  const getThemeLabel = (themeValue: Themes) => {
-    switch (themeValue) {
-      case "dark":
-        return "Dark mode";
-      case "light":
-        return "Light mode";
-      case "system":
-        return "System";
-    }
-  };
+  const isDark = useThemeStore((state) => state.isDark);
 
   return (
-    <main className="w-full min-h-screen bg-background p-4">
-      <Select
-        value={theme}
-        onValueChange={(value: string) => setTheme(value as Themes)}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue>
-            <div className="flex items-center gap-2">
-              <Icon icon={getThemeIcon(theme)} />
-              <span>{getThemeLabel(theme)}</span>
-            </div>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="dark">
-            <Icon icon="material-symbols-light:dark-mode-rounded" />
-            <span>Dark mode</span>
-          </SelectItem>
-          <SelectItem value="light">
-            <Icon icon="ix:light-dark" />
-            <span>Light mode</span>
-          </SelectItem>
-          <SelectItem value="system">
-            <Icon icon="mingcute:laptop-line" />
-            <span>System</span>
-          </SelectItem>
-        </SelectContent>
-      </Select>
+    <main className="relative w-full h-screen overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full bg-background/50 backdrop-blur-xs z-10">
+        <span className="absolute top-4 right-4">
+          <ThemeSwitcher />
+        </span>
 
-      <ChatInput />
+        <section className="w-full max-w-2xl px-8 lg:pd-0 h-max flex flex-col gap-6 items-center justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute">
+          <div className="w-48 h-48">
+            <Image
+              src={isDark() ? "/logo-dark.svg" : "/logo.svg"}
+              alt="Tax Yasef"
+              className="w-full h-full"
+              key={theme}
+            />
+          </div>
+          <h3 className="text-center font-nunito text-4xl font-semibold">
+            Make e no do you like film. Understand wetin dey sup before e
+            reach...
+          </h3>
+
+          <ChatInput />
+
+          <p className="text-sm mx-auto text-center text-muted-foreground">
+            Conversations with Tax Yasef center around the Nigerian Tax Act 2025
+            document as is stipulated in the Act. For further confirmation,
+            reach out to a professional tax advisor or counsel.
+          </p>
+        </section>
+      </div>
+
+      <Image
+        src={isDark() ? "/images/dark-bg.webp" : "/images/light-bg.webp"}
+        alt="Background"
+        fill
+        priority
+        loading="eager"
+        className="absolute top-0 left-0 w-auto h-auto object-cover z-0"
+        key={theme}
+      />
     </main>
   );
 }
