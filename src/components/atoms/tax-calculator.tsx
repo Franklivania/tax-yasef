@@ -144,6 +144,7 @@ export default function TaxCalculator() {
           <div className="flex items-center gap-2">
             {savedCalculations.length > 0 && (
               <Button
+                type="button"
                 variant="outline"
                 size="default"
                 onClick={handleClearStorage}
@@ -160,6 +161,7 @@ export default function TaxCalculator() {
             <Dialog>
               <DialogTrigger asChild>
                 <Button
+                  type="button"
                   variant="outline"
                   size="default"
                   className="flex items-center gap-1"
@@ -218,6 +220,13 @@ export default function TaxCalculator() {
                 value={formatInputValue(income)}
                 onChange={handleIncomeChange}
                 disabled={loading}
+                autoFocus={false}
+                onFocus={(e) => {
+                  // Only allow focus if user explicitly clicks on the input
+                  if (document.activeElement !== e.target) {
+                    e.target.blur();
+                  }
+                }}
               />
               {error && (
                 <p className="text-sm text-destructive font-nunito">{error}</p>
@@ -255,10 +264,13 @@ export default function TaxCalculator() {
                   </TabsList>
 
                   <Button
+                    type="button"
                     variant="outline"
                     size="default"
                     className="w-max justify-self-end"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       setResult(null);
                       setError(null);
                     }}
@@ -479,9 +491,12 @@ export default function TaxCalculator() {
                   {savedCalculations.slice(0, 5).map((calc) => (
                     <Button
                       key={calc.id}
+                      type="button"
                       variant="outline"
                       className="w-full justify-between"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         setResult({
                           ...calc,
                           explanation: undefined,
@@ -507,7 +522,7 @@ export default function TaxCalculator() {
           {/* Disclaimer */}
         </section>
 
-        <div className="w-full max-w-[95%] h-max p-4 rounded-xl bg-muted border border-muted mx-auto mt-auto">
+        <div className="w-full max-w-[95%] h-max p-4 rounded-xl bg-muted border border-muted mx-auto mt-auto mb-4">
           <p className="font-nunito text-sm text-muted-foreground">
             Please be informed that the calculations done here are in regards to
             the Nigeria Tax Act 2025 document as is stipulated in the Act.
