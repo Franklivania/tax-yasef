@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /api/
+Disallow: /ingest/
+Disallow: /dataset/
+Disallow: /index/
+Disallow: /admin/
+Disallow: /internal/
+Allow: /

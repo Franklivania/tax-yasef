@@ -1,5 +1,6 @@
 import { useUserStore } from "./store/useUserStore";
 import { useTokenUsageStore } from "./store/useTokenUsageStore";
+import { initializePromptPrime } from "./utils/prompt-prime";
 
 export async function initializeApp(): Promise<void> {
   if (typeof window === "undefined") return;
@@ -13,6 +14,9 @@ export async function initializeApp(): Promise<void> {
     const tokenStore = useTokenUsageStore.getState();
     tokenStore.syncUserToken();
     tokenStore.resetIfNeeded();
+
+    // Initialize document ingestion system
+    await initializePromptPrime();
 
     if (import.meta.env.DEV) {
       console.log("App initialized:", {

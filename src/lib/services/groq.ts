@@ -61,14 +61,20 @@ function getApiUrl(): string {
 /**
  * Create completion by calling secure backend API
  */
-const createCompletion = async (prompt: string): Promise<string> => {
+const createCompletion = async (
+  prompt: string,
+  systemPrompt?: string
+): Promise<string> => {
   const tokenStore = useTokenUsageStore.getState();
   const modelStore = useModelStore.getState();
   const currentModel = modelStore.model;
 
   tokenStore.resetIfNeeded();
 
-  const estimatedTokens = estimateTokens(prompt) + 2500;
+  const fullPrompt = systemPrompt
+    ? `${systemPrompt}\n\nUser: ${prompt}\n\nAssistant:`
+    : prompt;
+  const estimatedTokens = estimateTokens(fullPrompt) + 2500;
 
   // Check token limits before making request
   if (!tokenStore.canUse(currentModel, estimatedTokens)) {
@@ -81,7 +87,7 @@ const createCompletion = async (prompt: string): Promise<string> => {
   try {
     // Prepare request
     const requestBody: GroqRequest = {
-      prompt,
+      prompt: fullPrompt,
       model: modelStore.getModelValue(),
       temperature: 0.7,
       max_tokens: 2500,

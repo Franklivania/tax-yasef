@@ -9,6 +9,8 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Icon } from "@iconify/react";
+import InfoModal from "../modals/info-modal";
+import useDeviceSize from "@/lib/hooks/useDeviceSize";
 
 export default function ChatHeader({
   setOpen,
@@ -18,10 +20,11 @@ export default function ChatHeader({
   open?: boolean;
 }) {
   const isDark = useThemeStore((state) => state.isDark);
+  const { isMobile } = useDeviceSize();
 
   return (
     <header className="w-full bg-transparent flex items-center justify-between">
-      <div className="w-12 h-12">
+      <div className={isMobile ? "w-8 h-8" : "w-12 h-12"}>
         {isDark() ? (
           <Image
             src="/logo-dark.svg"
@@ -33,14 +36,28 @@ export default function ChatHeader({
         )}
       </div>
 
-      <aside className="flex items-center gap-2">
-        <Button variant="ghost" className="flex items-center gap-2">
-          <Icon icon="material-symbols:info-rounded" />
-          Info
-        </Button>
+      <aside className="flex items-center gap-1 md:gap-2">
+        <InfoModal>
+          <Button
+            variant="ghost"
+            size={isMobile ? "icon" : "default"}
+            className="flex items-center gap-1 md:gap-2"
+          >
+            <Icon
+              icon="material-symbols:info-rounded"
+              className={isMobile ? "size-4" : "size-5"}
+            />
+            {!isMobile && <span>Info</span>}
+          </Button>
+        </InfoModal>
 
-        <Button variant="ghost" onClick={() => setOpen(!open)}>
-          Tax Calculator
+        <Button
+          variant="ghost"
+          size={isMobile ? "sm" : "default"}
+          onClick={() => setOpen(!open)}
+          className={isMobile ? "text-xs px-2" : "text-sm"}
+        >
+          {isMobile ? "Calculator" : "Tax Calculator"}
         </Button>
 
         <ThemeSwitcher />

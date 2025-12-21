@@ -1,9 +1,9 @@
 import { useThemeStore } from "./lib/store/useThemeStore";
 import { Image } from "./components/ui/image";
 import { ThemeSwitcher } from "@/components/layout/chat-header";
-import ChatInput from "./components/atoms/chat-input";
 import { Button } from "./components/ui/button";
 import { useNavigate } from "react-router-dom";
+import ChatInput from "./components/atoms/chat-input";
 
 function App() {
   const navigate = useNavigate();
@@ -11,6 +11,10 @@ function App() {
   const isDark = useThemeStore((state) => state.isDark);
 
   const handleNavigate = () => {
+    navigate("/chat");
+  };
+
+  const handleAfterSubmit = () => {
     navigate("/chat");
   };
 
@@ -43,7 +47,7 @@ function App() {
             >
               Click to calculate your tax
             </Button>
-            <ChatInput />
+            <ChatInput onAfterSubmit={handleAfterSubmit} />
           </section>
 
           <p className="text-sm mx-auto text-center text-muted-foreground">
