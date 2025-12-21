@@ -492,7 +492,7 @@ export default function TaxCalculator() {
                       key={calc.id}
                       type="button"
                       variant="outline"
-                      className="w-full justify-between"
+                      className="w-full justify-between overflow-hidden"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();

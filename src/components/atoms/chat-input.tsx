@@ -17,6 +17,9 @@ import { Image } from "../ui/image";
 import { Icon } from "@iconify/react";
 import Loader from "../ui/loader";
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
+import { sanitizeInput, containsDangerousContent } from "@/lib/utils/security";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
+import { SROnly } from "../accessibility/sr-only";
 
 export default function ChatInput({
   onLoadingChange,
@@ -35,6 +38,7 @@ export default function ChatInput({
     (state) => state.addNotification
   );
   const { isMobile } = useDeviceSize();
+  const { isOnline } = useOnlineStatus();
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -72,7 +76,26 @@ export default function ChatInput({
     const trimmedValue = value.trim();
     if (!trimmedValue || isLoading) return;
 
-    const promptResult = buildUserPrompt(trimmedValue);
+    // Check online status
+    if (!isOnline) {
+      addNotification(
+        "error",
+        "You are currently offline. Please check your connection and try again."
+      );
+      return;
+    }
+
+    // Sanitize input
+    const sanitizedValue = sanitizeInput(trimmedValue);
+    if (containsDangerousContent(sanitizedValue)) {
+      addNotification(
+        "error",
+        "Input contains potentially dangerous content. Please try again."
+      );
+      return;
+    }
+
+    const promptResult = buildUserPrompt(sanitizedValue);
     if (promptResult.blocked) {
       addNotification(
         "error",
@@ -86,7 +109,7 @@ export default function ChatInput({
 
     addMessage({
       role: "user",
-      content: trimmedValue,
+      content: sanitizedValue,
     });
 
     // Call callback after adding user message (e.g., for navigation)
@@ -99,7 +122,7 @@ export default function ChatInput({
         calculationsContext
       );
       const response = await groqService.createCompletion(
-        promptResult.prompt,
+        sanitizedValue,
         systemPrompt
       );
 
@@ -174,11 +197,20 @@ export default function ChatInput({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isLoading || !value.trim()}
+            disabled={isLoading || !value.trim() || !isOnline}
             className={`bg-secondary rounded-full hover:bg-secondary/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${
               isMobile ? "p-1.5" : "p-2"
             }`}
+            aria-label="Send message"
+            aria-describedby="send-button-description"
           >
+            <SROnly id="send-button-description">
+              {isLoading
+                ? "Sending message..."
+                : !isOnline
+                  ? "Cannot send while offline"
+                  : "Send your message"}
+            </SROnly>
             {isLoading ? (
               <Loader className={isMobile ? "size-6" : "size-8"} />
             ) : (
@@ -203,14 +235,19 @@ export default function ChatInput({
               className="shrink-0"
             />
           )}
+          <SROnly>
+            <label htmlFor="model-select">Select AI model</label>
+          </SROnly>
           <Select
             value={getModelValue()}
             onValueChange={handleModelChange}
-            disabled={isLoading}
+            disabled={isLoading || !isOnline}
           >
             <SelectTrigger
-              disabled={isLoading}
+              id="model-select"
+              disabled={isLoading || !isOnline}
               className={isMobile ? "h-8 text-xs" : "h-10 text-sm"}
+              aria-label={`Current model: ${model}`}
             >
               <SelectValue placeholder={model} />
             </SelectTrigger>

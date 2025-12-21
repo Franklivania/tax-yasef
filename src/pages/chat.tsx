@@ -11,12 +11,16 @@ import TaxCalculator from "@/components/atoms/tax-calculator";
 import ChatHeader from "@/components/layout/chat-header";
 import NotificationBanner from "@/components/atoms/notification-banner";
 import TokenUsageNotification from "@/components/atoms/token-usage-notification";
+import { OfflineIndicator } from "@/components/accessibility/offline-indicator";
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
 import { useOpen } from "@/lib/hooks/useOpen";
 import { useMessageStore } from "@/lib/store/useMessageStore";
+import { useHighContrastStore } from "@/lib/store/useHighContrastStore";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { getCookie, setCookie } from "@/lib/utils/cookies";
+import { SROnly } from "@/components/accessibility/sr-only";
+import { useSearchParams } from "react-router-dom";
 
 const TAX_CALCULATOR_COOKIE_NAME = "tax-yasef-calculator-state";
 const COOKIE_EXPIRY_DAYS = 15;
@@ -29,6 +33,24 @@ export default function ChatDisplay() {
   const clearMessages = useMessageStore((state) => state.clearMessages);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [initialized, setInitialized] = useState(false);
+  const highContrastEnabled = useHighContrastStore((state) => state.enabled);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Apply high contrast mode to document
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const html = document.documentElement;
+    if (highContrastEnabled) {
+      html.classList.add("high-contrast");
+    } else {
+      html.classList.remove("high-contrast");
+    }
+
+    return () => {
+      html.classList.remove("high-contrast");
+    };
+  }, [highContrastEnabled]);
 
   // Get initial state from cookie or use device-based default
   const getInitialCalculatorState = useCallback((): boolean => {
@@ -55,17 +77,54 @@ export default function ChatDisplay() {
     return true;
   });
 
-  // Update state from cookie when device size is known
+  // Update state from cookie when device size is known, or from URL parameter
   useEffect(() => {
     if (!initialized && width !== null) {
-      const savedState = getInitialCalculatorState();
+      const shouldOpenCalculator =
+        searchParams.get("openCalculator") === "true";
+      let savedState = getInitialCalculatorState();
+
+      // If URL parameter says to open calculator, override saved state
+      if (shouldOpenCalculator) {
+        savedState = true;
+        // Remove the query parameter after reading it
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete("openCalculator");
+        setSearchParams(newSearchParams, { replace: true });
+      }
+
       // Use startTransition to batch state updates and prevent cascading renders
       startTransition(() => {
         setCalculatorOpen(savedState);
         setInitialized(true);
       });
     }
-  }, [width, isMobile, initialized, getInitialCalculatorState]);
+  }, [
+    width,
+    isMobile,
+    initialized,
+    getInitialCalculatorState,
+    searchParams,
+    setSearchParams,
+  ]);
+
+  // Handle opening calculator from URL parameter after initialization
+  useEffect(() => {
+    if (initialized) {
+      const shouldOpenCalculator =
+        searchParams.get("openCalculator") === "true";
+      if (shouldOpenCalculator && !calculatorOpen) {
+        // Use startTransition to batch state updates and prevent cascading renders
+        startTransition(() => {
+          setCalculatorOpen(true);
+        });
+        // Remove the query parameter after opening
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete("openCalculator");
+        setSearchParams(newSearchParams, { replace: true });
+      }
+    }
+  }, [initialized, calculatorOpen, searchParams, setSearchParams]);
 
   // Save state to cookie whenever it changes (after initialization)
   useEffect(() => {
@@ -133,8 +192,18 @@ export default function ChatDisplay() {
   return (
     <main
       className={`w-full h-screen bg-background overflow-hidden ${isMobile ? "" : "flex"}`}
+      role="main"
+      aria-label="Tax Yasef Chat Interface"
     >
+      <SROnly>
+        <h1>Tax Yasef - Nigerian Tax Assistant</h1>
+        <p>
+          Chat interface for asking questions about the Nigerian Tax Act 2025.
+          Use the input at the bottom to send messages.
+        </p>
+      </SROnly>
       <TokenUsageNotification />
+      <OfflineIndicator />
       <div
         className="relative w-full flex flex-col h-screen transition-all duration-300 ease-in-out overflow-hidden fancy-scrollbar"
         style={{
@@ -144,16 +213,17 @@ export default function ChatDisplay() {
         }}
         onClick={isMobile && open ? () => setOpen(false) : undefined}
       >
-        <div
+        <header
           className={`fixed top-0 left-0 w-full h-max z-50 ${isMobile ? "p-2 bg-background/95 backdrop-blur-sm border-b border-b-muted" : "p-4"}`}
+          role="banner"
         >
           <ChatHeader setOpen={setOpen} open={open} />
-        </div>
+        </header>
 
         <div
           ref={scrollContainerRef}
           className={`relative w-full flex-1 overflow-y-auto overflow-x-hidden fancy-scrollbar ${
-            isMobile ? "pt-16 pb-48" : "pt-20 pb-80"
+            isMobile ? "pt-16 pb-56" : "pt-20 pb-80"
           }`}
         >
           {messages.length > 0 && (
@@ -168,6 +238,7 @@ export default function ChatDisplay() {
                   isMobile ? "size-8" : "size-10"
                 }`}
                 title="Clear chat history"
+                aria-label="Clear all chat messages"
               >
                 <Icon
                   icon="material-symbols:delete-outline"
@@ -193,7 +264,7 @@ export default function ChatDisplay() {
           style={{ maxWidth: isMobile ? "100vw" : undefined }}
         >
           <div
-            className={`w-full mx-auto flex flex-col gap-2 ${
+            className={`w-full mx-auto flex flex-col gap-2 pb-6 md:pb-3 ${
               isMobile ? "max-w-full px-0" : "max-w-3xl"
             }`}
             style={{ minWidth: 0 }}
@@ -210,6 +281,26 @@ export default function ChatDisplay() {
               You are advised to confirm the information you provide with a
               professional tax advisor.
             </p>
+            <span className="mx-auto text-center text-muted-foreground text-xs">
+              With 👨🏾‍💻 and 🎨 by{" "}
+              <a
+                href="https://x.com/OdigboF"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-foreground"
+              >
+                Chibuzo Franklin
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://x.com/OlarindeSodiq20"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-foreground"
+              >
+                Olarinde Sodiq
+              </a>
+            </span>
           </div>
         </section>
       </div>
@@ -242,6 +333,9 @@ export default function ChatDisplay() {
               : "translateX(100%)"
             : "translateX(0)",
         }}
+        role="complementary"
+        aria-label="Tax Calculator"
+        aria-hidden={!open}
       >
         {open && (
           <div className="relative h-full w-full">

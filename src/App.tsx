@@ -4,6 +4,7 @@ import { ThemeSwitcher } from "@/components/layout/chat-header";
 import { Button } from "./components/ui/button";
 import { useNavigate } from "react-router-dom";
 import ChatInput from "./components/atoms/chat-input";
+import { Icon } from "@iconify/react";
 
 function App() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ function App() {
   const isDark = useThemeStore((state) => state.isDark);
 
   const handleNavigate = () => {
-    navigate("/chat");
+    navigate("/chat?openCalculator=true");
   };
 
   const handleAfterSubmit = () => {
@@ -21,7 +22,17 @@ function App() {
   return (
     <main className="relative w-full h-screen overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full bg-background/50 backdrop-blur-xs z-10">
-        <span className="absolute top-4 right-4">
+        <span className="absolute top-4 right-4 flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() =>
+              window.open("https://github.com/Franklivania/tax-yasef", "_blank")
+            }
+          >
+            <Icon icon="mdi:github" className="size-6" />
+            <span className="sr-only">Star on Github</span>
+            <span>Star on GitHub</span>
+          </Button>
           <ThemeSwitcher />
         </span>
 
