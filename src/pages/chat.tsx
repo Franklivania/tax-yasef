@@ -13,56 +13,70 @@ export default function ChatDisplay() {
     defaultOpen: width !== null ? (isMobile ? false : true) : true,
     closeOnClickOutside: isMobile,
   });
+
   return (
     <main
-      className={`relative w-full min-h-screen bg-background overflow-hidden ${isMobile ? "" : "flex"}`}
+      className={`w-full bg-background overflow-hidden ${isMobile ? "" : "flex"}`}
     >
       <div
-        className="flex flex-col h-screen transition-all duration-300 ease-in-out p-4"
+        className="relative w-full flex flex-col h-screen transition-all duration-300 ease-in-out overflow-x-hidden fancy-scrollbar"
         style={{
           width: open ? (isMobile ? "100%" : "calc(100% - 420px)") : "100%",
           transform: isMobile && open ? "translateX(-10%)" : "translateX(0)",
         }}
         onClick={isMobile && open ? () => setOpen(false) : undefined}
       >
-        <ChatHeader setOpen={setOpen} open={open} />
-        <MessageDisplay />
-        <section className="w-full flex flex-col gap-2">
-          <span className="w-full md:w-max mx-auto p-3 rounded-md bg-muted flex items-start gap-2">
-            <Icon
-              icon="material-symbols:info-rounded"
-              className="size-12 md:size-6 -mt-1.5 md:m-0"
-            />
-            <p className="font-nunito">
-              You have exceeded your daily limit for this model. Please select a
-              different model to continue.
-            </p>
-          </span>
-          <span className="w-full md:w-max mx-auto p-3 rounded-md bg-destructive/10 flex items-start gap-2">
-            <Icon
-              icon="mynaui:danger-triangle-solid"
-              className="size-8 md:size-6 text-destructive"
-            />
-            <p className="font-nunito text-destructive">
-              You have reached maximum usage. Time resets by {0}
-            </p>
-          </span>
-          <span className="w-full md:w-max mx-auto p-3 rounded-md bg-green-500/10 flex items-center gap-2">
-            <Icon
-              icon="ph:check-circle-fill"
-              className="size-6 text-green-500"
-            />
-            <p className="font-nunito text-green-500">
-              You are now using the model model.
-            </p>
-          </span>
+        {/* Fixed Header */}
+        <div className="fixed top-0 left-0 w-full h-max p-4 z-50">
+          <ChatHeader setOpen={setOpen} open={open} />
+        </div>
 
-          <ChatInput />
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto pt-20 pb-80 px-4 fancy-scrollbar">
+          <section className="w-full max-w-3xl mx-auto">
+            <MessageDisplay />
+          </section>
+        </div>
 
-          <p className="mx-auto text-muted-foreground text-sm text-center italic">
-            You are advised to confirm the information you provide with a
-            professional tax advisor.
-          </p>
+        {/* Fixed Bottom Section */}
+        <section className="fixed bottom-0 left-0 w-full h-max p-4 z-10 bg-background/15 backdrop-blur-sm flex flex-col gap-2">
+          <div className="w-full max-w-3xl mx-auto flex flex-col gap-2">
+            <span className="w-full md:w-max mx-auto p-3 rounded-md bg-muted flex items-start gap-2">
+              <Icon
+                icon="material-symbols:info-rounded"
+                className="size-12 md:size-6 -mt-1.5 md:m-0"
+              />
+              <p className="font-nunito">
+                You have exceeded your daily limit for this model. Please select
+                a different model to continue.
+              </p>
+            </span>
+            <span className="w-full md:w-max mx-auto p-3 rounded-md bg-destructive/10 flex items-start gap-2">
+              <Icon
+                icon="mynaui:danger-triangle-solid"
+                className="size-8 md:size-6 text-destructive"
+              />
+              <p className="font-nunito text-destructive">
+                You have reached maximum usage. Time resets by {0}
+              </p>
+            </span>
+            <span className="w-full md:w-max mx-auto p-3 rounded-md bg-green-500/10 flex items-center gap-2">
+              <Icon
+                icon="ph:check-circle-fill"
+                className="size-6 text-green-500"
+              />
+              <p className="font-nunito text-green-500">
+                You are now using the model model.
+              </p>
+            </span>
+
+            <ChatInput />
+
+            <p className="mx-auto text-muted-foreground text-sm text-center italic">
+              You are advised to confirm the information you provide with a
+              professional tax advisor.
+            </p>
+          </div>
         </section>
       </div>
 

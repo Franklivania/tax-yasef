@@ -195,6 +195,36 @@ x .no-scrollbar {
   background: var(--accent);
 }
 
+.muted-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) transparent;
+}
+
+.muted-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.muted-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.muted-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 10px;
+}
+
+.muted-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.muted-scrollbar::-webkit-scrollbar-thumb:active {
+  background: var(--muted);
+}
+
+.muted-scrollbar::-webkit-scrollbar-thumb:focus {
+  background: var(--muted);
+}
+
 .gradient-border {
   border: 0.25em solid;
   border-image: linear-gradient(to right, var(--primary), var(--secondary)) 1
@@ -219,6 +249,12 @@ x .no-scrollbar {
     no-repeat;
   background-size: 200% 200%;
   animation: gradient-animation 15s ease infinite;
+}
+
+.button-gradient {
+  background: linear-gradient(45deg, var(--primary), var(--secondary)) no-repeat;
+  background-size: 200% 200%;
+  animation: gradient-animation 3s ease infinite;
 }
 
 @keyframes gradient-animation {
