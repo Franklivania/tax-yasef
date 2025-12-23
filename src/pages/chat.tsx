@@ -290,7 +290,7 @@ export default function ChatDisplay() {
                 isMobile ? "text-xs px-2" : "text-sm"
               }`}
             >
-              You are advised to confirm the information you provide with a
+              You are advised to confirm the information gotten here with a
               professional tax advisor.
             </p>
             <span className="mx-auto text-center text-muted-foreground text-xs">

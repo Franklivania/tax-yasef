@@ -3,9 +3,6 @@
  * Functions for reading PDF documents, guarding prompts, and priming AI for tax evaluations
  */
 
-// PDF worker configuration is now handled in pdf-extraction.ts
-
-// Blocked response message
 const BLOCKED_RESPONSE =
   "We do not do that heare, if you no wan guard yasef, shaa leave this place comot. \n ask better question abeg, make we continue.";
 
