@@ -31,6 +31,12 @@ export default function TokenUsageNotification() {
   useEffect(() => {
     const usage = tokenStore.modelUsage[currentModel];
     const limits = ModelLimits[currentModel];
+
+    // Safety check: ensure usage exists
+    if (!usage || !limits) {
+      return;
+    }
+
     const remaining = tokenStore.getRemaining(currentModel);
 
     const dayUsagePercent = (usage.day.tokens / limits.tokensPerDay) * 100;

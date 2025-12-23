@@ -15,8 +15,15 @@ export async function initializeApp(): Promise<void> {
     tokenStore.syncUserToken();
     tokenStore.resetIfNeeded();
 
-    // Initialize document ingestion system
-    await initializePromptPrime();
+    // Initialize document ingestion system (non-blocking - app continues even if PDF fails)
+    // This allows the app to function even if the PDF is corrupted or unavailable
+    initializePromptPrime().catch((error) => {
+      console.warn(
+        "PDF initialization failed, but app will continue. Document features may be limited.",
+        error
+      );
+      // Don't throw - allow app to continue without PDF
+    });
 
     if (import.meta.env.DEV) {
       console.log("App initialized:", {

@@ -19,7 +19,11 @@ export const useModelStore = create<ModelStore>()(
     (set, get) => ({
       model: defaultModel,
       setModel: (model: ModelID) => set({ model }),
-      getModelValue: () => ModelParams[get().model],
+      getModelValue: () => {
+        const currentModel = get().model;
+        // Fallback to default if model is invalid (e.g., removed model)
+        return ModelParams[currentModel] || ModelParams[defaultModel];
+      },
       getModelOption: () => {
         const currentModel = get().model;
         return (
@@ -33,6 +37,12 @@ export const useModelStore = create<ModelStore>()(
     {
       name: "tax-yasef-model-storage",
       partialize: (state) => ({ model: state.model }),
+      onRehydrateStorage: () => (state) => {
+        // If persisted model is invalid, reset to default
+        if (state && !ModelParams[state.model]) {
+          state.model = defaultModel;
+        }
+      },
     }
   )
 );

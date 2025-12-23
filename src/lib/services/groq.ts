@@ -36,7 +36,19 @@ interface ErrorResponse {
   code?: string;
 }
 
-const estimateTokens = (text: string): number => Math.ceil(text.length / 4);
+/**
+ * Estimate tokens in text
+ * More accurate estimation: ~4 characters per token for English text
+ * Accounts for spaces and punctuation
+ */
+const estimateTokens = (text: string): number => {
+  if (!text || text.length === 0) return 0;
+  // More accurate: count words and add overhead for punctuation/spaces
+  const words = text.trim().split(/\s+/).length;
+  const chars = text.length;
+  // Average: ~1.3 tokens per word, or ~4 chars per token
+  return Math.ceil(Math.max(words * 1.3, chars / 4));
+};
 
 export class TokenLimitError extends Error {
   constructor(message: string) {
@@ -81,6 +93,15 @@ const createCompletion = async (
   const tokenStore = useTokenUsageStore.getState();
   const modelStore = useModelStore.getState();
   const currentModel = modelStore.model;
+  const currentModelValue = modelStore.getModelValue();
+
+  // Model-specific max_tokens limits (if any model needs special limits)
+  const modelMaxTokens: Record<string, number> = {
+    // Add model-specific limits here if needed (default 2500)
+  };
+
+  // Get the appropriate max_tokens for the current model
+  const maxTokens = modelMaxTokens[currentModelValue] || 2500;
 
   tokenStore.resetIfNeeded();
 
@@ -101,7 +122,14 @@ const createCompletion = async (
   const fullPrompt = systemPrompt
     ? `${systemPrompt}\n\nUser: ${sanitizedPrompt}\n\nAssistant:`
     : sanitizedPrompt;
-  const estimatedTokens = estimateTokens(fullPrompt) + 2500;
+
+  // More accurate token estimation:
+  // - Input tokens: actual prompt length
+  // - Output tokens: use 50% of maxTokens as average (not worst case)
+  // This prevents overestimation that causes false limit failures
+  const inputTokens = estimateTokens(fullPrompt);
+  const estimatedOutputTokens = Math.ceil(maxTokens * 0.5); // Assume average response, not max
+  const estimatedTokens = inputTokens + estimatedOutputTokens;
 
   // Check token limits before making request
   if (!tokenStore.canUse(currentModel, estimatedTokens)) {
@@ -117,7 +145,7 @@ const createCompletion = async (
       prompt: fullPrompt,
       model: modelStore.getModelValue(),
       temperature: 0.7,
-      max_tokens: 2500,
+      max_tokens: maxTokens,
       top_p: 1,
       frequency_penalty: 0,
       presence_penalty: 0,
