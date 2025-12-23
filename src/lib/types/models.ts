@@ -1,16 +1,16 @@
 export type Models =
   | "openai/gpt-oss-120b"
-  | "meta-llama/llama-guard-4-12b"
   | "llama-3.1-8b-instant"
   | "openai/gpt-oss-safeguard-20b"
-  | "groq/compound";
+  | "groq/compound"
+  | "meta-llama/llama-4-maverick-17b-128e-instruct";
 
 export type ModelID =
   | "GPT-4 OSS"
-  | "Llama Guard 4"
   | "Llama 3.1"
   | "GPT-OSS"
-  | "Groq Compound";
+  | "Groq Compound"
+  | "Llama 4 Maverick";
 
 export type ModelOption = {
   label: ModelID;
@@ -26,10 +26,10 @@ export type ModelLimits = {
 
 export const ModelParams: Record<ModelID, Models> = {
   "GPT-4 OSS": "openai/gpt-oss-120b",
-  "Llama Guard 4": "meta-llama/llama-guard-4-12b",
   "Llama 3.1": "llama-3.1-8b-instant",
   "GPT-OSS": "openai/gpt-oss-safeguard-20b",
   "Groq Compound": "groq/compound",
+  "Llama 4 Maverick": "meta-llama/llama-4-maverick-17b-128e-instruct",
 } as const;
 
 export const ModelLimits: Record<ModelID, ModelLimits> = {
@@ -51,11 +51,11 @@ export const ModelLimits: Record<ModelID, ModelLimits> = {
     requestsPerMin: 30,
     requestsPerDay: 14400,
   },
-  "Llama Guard 4": {
-    tokensPerMin: 15000,
+  "Llama 4 Maverick": {
+    tokensPerMin: 6000,
     tokensPerDay: 500000,
     requestsPerMin: 30,
-    requestsPerDay: 14400,
+    requestsPerDay: 1000,
   },
   "Groq Compound": {
     tokensPerMin: 8000,
@@ -67,8 +67,11 @@ export const ModelLimits: Record<ModelID, ModelLimits> = {
 
 export const ModelOptions: readonly ModelOption[] = [
   { label: "GPT-4 OSS", value: "openai/gpt-oss-120b" },
-  { label: "Llama Guard 4", value: "meta-llama/llama-guard-4-12b" },
   { label: "Llama 3.1", value: "llama-3.1-8b-instant" },
   { label: "GPT-OSS", value: "openai/gpt-oss-safeguard-20b" },
   { label: "Groq Compound", value: "groq/compound" },
+  {
+    label: "Llama 4 Maverick",
+    value: "meta-llama/llama-4-maverick-17b-128e-instruct",
+  },
 ] as const;

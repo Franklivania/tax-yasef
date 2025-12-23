@@ -33,7 +33,10 @@ const initModelUsage = (): Record<
   "GPT-4 OSS": { minute: createWindow(60000), day: createWindow(86400000) },
   "GPT-OSS": { minute: createWindow(60000), day: createWindow(86400000) },
   "Llama 3.1": { minute: createWindow(60000), day: createWindow(86400000) },
-  "Llama Guard 4": { minute: createWindow(60000), day: createWindow(86400000) },
+  "Llama 4 Maverick": {
+    minute: createWindow(60000),
+    day: createWindow(86400000),
+  },
   "Groq Compound": { minute: createWindow(60000), day: createWindow(86400000) },
 });
 
@@ -51,16 +54,26 @@ export const useTokenUsageStore = create<TokenUsageStore>()(
       resetIfNeeded: () => {
         const now = Date.now();
         set((state) => {
+          const defaultUsage = initModelUsage();
           const updated = { ...state.modelUsage };
           let changed = false;
 
+          // Ensure all models exist
+          for (const model in defaultUsage) {
+            if (!updated[model as ModelID]) {
+              updated[model as ModelID] = defaultUsage[model as ModelID];
+              changed = true;
+            }
+          }
+
+          // Reset windows that have expired
           for (const model in updated) {
             const usage = updated[model as ModelID];
-            if (usage.minute.resetAt <= now) {
+            if (usage && usage.minute && usage.minute.resetAt <= now) {
               usage.minute = createWindow(60000);
               changed = true;
             }
-            if (usage.day.resetAt <= now) {
+            if (usage && usage.day && usage.day.resetAt <= now) {
               usage.day = createWindow(86400000);
               changed = true;
             }
@@ -75,7 +88,16 @@ export const useTokenUsageStore = create<TokenUsageStore>()(
         state.resetIfNeeded();
 
         const limits = ModelLimits[model];
-        const usage = state.modelUsage[model];
+        let usage = state.modelUsage[model];
+
+        // Safety check: if usage doesn't exist, initialize it
+        if (!usage) {
+          const defaultUsage = initModelUsage();
+          set({
+            modelUsage: { ...state.modelUsage, [model]: defaultUsage[model] },
+          });
+          usage = get().modelUsage[model];
+        }
 
         const minuteOk =
           usage.minute.tokens + tokens <= limits.tokensPerMin &&
@@ -89,7 +111,16 @@ export const useTokenUsageStore = create<TokenUsageStore>()(
 
       addUsage: (model: ModelID, tokens: number) => {
         set((state) => {
-          const usage = { ...state.modelUsage[model] };
+          let usage = state.modelUsage[model];
+
+          // Safety check: if usage doesn't exist, initialize it
+          if (!usage) {
+            const defaultUsage = initModelUsage();
+            usage = defaultUsage[model];
+          } else {
+            usage = { ...usage };
+          }
+
           usage.minute = {
             ...usage.minute,
             tokens: usage.minute.tokens + tokens,
@@ -110,6 +141,28 @@ export const useTokenUsageStore = create<TokenUsageStore>()(
 
         const limits = ModelLimits[model];
         const usage = state.modelUsage[model];
+
+        // Safety check: if usage doesn't exist, initialize it
+        if (!usage) {
+          const defaultUsage = initModelUsage();
+          set({
+            modelUsage: { ...state.modelUsage, [model]: defaultUsage[model] },
+          });
+          const updatedState = get();
+          const updatedUsage = updatedState.modelUsage[model];
+
+          if (
+            updatedUsage.minute.requests >= limits.requestsPerMin ||
+            updatedUsage.day.requests >= limits.requestsPerDay
+          ) {
+            return 0;
+          }
+
+          return Math.min(
+            limits.tokensPerMin - updatedUsage.minute.tokens,
+            limits.tokensPerDay - updatedUsage.day.tokens
+          );
+        }
 
         if (
           usage.minute.requests >= limits.requestsPerMin ||
@@ -133,6 +186,22 @@ export const useTokenUsageStore = create<TokenUsageStore>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.userToken = useUserStore.getState().userToken;
+
+          // Ensure all models are initialized (migration for new models)
+          const defaultUsage = initModelUsage();
+          const updatedUsage = { ...state.modelUsage };
+          let needsUpdate = false;
+
+          for (const model in defaultUsage) {
+            if (!updatedUsage[model as ModelID]) {
+              updatedUsage[model as ModelID] = defaultUsage[model as ModelID];
+              needsUpdate = true;
+            }
+          }
+
+          if (needsUpdate) {
+            state.modelUsage = updatedUsage;
+          }
         }
       },
     }

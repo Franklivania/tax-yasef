@@ -8,6 +8,8 @@ import {
   queryDocument,
   getChunksForAI,
   type QueryResponse,
+  detectIntent,
+  type QueryIntent,
 } from "./document-query";
 
 let currentDocument: IngestedDocument | null = null;
@@ -47,37 +49,41 @@ export function queryCurrentDocument(
 /**
  * Get AI context from query
  * Always returns some context, even if query doesn't match perfectly
+ * Optimized for token efficiency with better relevance filtering
  */
 export function getAIContextFromQuery(
   query: string,
-  maxTokens: number = 4000
+  maxTokens: number = 2000
 ): string | null {
   if (!currentDocument) {
     return null;
   }
 
+  const intent: QueryIntent = detectIntent(query);
+
+  // Improved query with better relevance filtering
   const queryResponse = queryCurrentDocument(query, {
-    limit: 15, // Get more chunks for better context
-    minScore: 0.01, // Very lenient threshold
+    limit: 8, // Focus on the most relevant
+    minScore: 0.2, // Higher threshold for quality
   });
 
   if (!queryResponse || queryResponse.results.length === 0) {
-    // Fallback: return general chunks from document
+    // Fallback: return general chunks from document with lower limit
     const fallbackResponse = queryDocument(
       currentDocument,
       "tax act provisions",
       {
-        limit: 10,
-        minScore: 0.01,
+        limit: 5, // Reduced fallback limit
+        minScore: 0.2,
       }
     );
     if (fallbackResponse.results.length > 0) {
-      return getChunksForAI(fallbackResponse, maxTokens);
+      return getChunksForAI(fallbackResponse, maxTokens, intent);
     }
     return null;
   }
 
-  return getChunksForAI(queryResponse, maxTokens);
+  return getChunksForAI(queryResponse, maxTokens, intent);
 }
 
 /**

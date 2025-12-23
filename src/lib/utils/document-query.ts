@@ -34,15 +34,25 @@ function expandQuery(query: string): string {
     "allowance",
     "exemption",
     "relief",
+    "section 30(1)",
+    "individual income tax rates",
+    "relief allowance",
+    "800000",
+    "2,200,000",
+    "9,000,000",
+    "13,000,000",
+    "25,000,000",
+    "50,000,000",
   ];
 
   // If query doesn't contain tax terms, add them for better matching
   const hasTaxTerm = taxTerms.some((term) => lowerQuery.includes(term));
   if (!hasTaxTerm) {
-    return `${query} tax income chargeable`;
+    return `${query} tax income chargeable section 30(1) individual income tax rates 800000 2200000 9000000 13000000 25000000 50000000`;
   }
 
-  return query;
+  // Add current-year bracket anchors to bias toward the 2025 Act rates
+  return `${query} section 30(1) individual income tax rates relief allowance 800000 2200000 9000000 13000000 25000000 50000000`;
 }
 
 /**
@@ -139,41 +149,251 @@ export function queryDocument(
 }
 
 /**
+ * Intent classification to steer retrieval and formatting
+ */
+export type QueryIntent = "rates" | "process" | "budget" | "general";
+
+export function detectIntent(query: string): QueryIntent {
+  const q = query.toLowerCase();
+  if (
+    q.includes("rate") ||
+    q.includes("bracket") ||
+    q.includes("band") ||
+    q.includes("taxable income") ||
+    q.includes("800") ||
+    q.includes("2,200,000") ||
+    q.includes("9,000,000") ||
+    q.includes("13,000,000") ||
+    q.includes("25,000,000") ||
+    q.includes("50,000,000")
+  ) {
+    return "rates";
+  }
+  if (
+    q.includes("pay") ||
+    q.includes("file") ||
+    q.includes("return") ||
+    q.includes("tin") ||
+    q.includes("payment")
+  ) {
+    return "process";
+  }
+  if (
+    q.includes("spend") ||
+    q.includes("budget") ||
+    q.includes("net income") ||
+    q.includes("take home")
+  ) {
+    return "budget";
+  }
+  return "general";
+}
+
+/**
+ * Summarize/condense a chunk to reduce token usage while preserving key information
+ */
+function summarizeChunk(chunk: Chunk, maxLength: number = 300): string {
+  const content = chunk.content.trim();
+
+  // If content is already short enough, return as-is
+  if (content.length <= maxLength) {
+    return content;
+  }
+
+  // Try to extract first sentence (usually contains key info)
+  const firstSentenceMatch = content.match(/^[^.!?]+[.!?]/);
+  const firstSentence = firstSentenceMatch ? firstSentenceMatch[0].trim() : "";
+
+  // Extract key phrases (sentences with important terms)
+  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 20);
+  const importantTerms = [
+    "tax",
+    "rate",
+    "deduction",
+    "allowance",
+    "exemption",
+    "chargeable",
+    "assessable",
+    "income",
+    "relief",
+  ];
+
+  const keySentences: string[] = [];
+  if (firstSentence) {
+    keySentences.push(firstSentence);
+  }
+
+  // Add sentences containing important terms
+  for (const sentence of sentences.slice(1, 5)) {
+    const lowerSentence = sentence.toLowerCase();
+    if (importantTerms.some((term) => lowerSentence.includes(term))) {
+      keySentences.push(sentence.trim());
+      if (keySentences.join(" ").length > maxLength) break;
+    }
+  }
+
+  // If we have key sentences, use them
+  if (keySentences.length > 0) {
+    let summary = keySentences.join(". ");
+    if (summary.length > maxLength) {
+      summary = summary.substring(0, maxLength - 3) + "...";
+    }
+    return summary;
+  }
+
+  // Fallback: truncate with ellipsis
+  return content.substring(0, maxLength - 3) + "...";
+}
+
+/**
+ * Lightweight token estimate (~4 chars per token)
+ */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+function isRateChunk(content: string): boolean {
+  const lower = content.toLowerCase();
+  const markers = [
+    "section 30(1)",
+    "income tax rates",
+    "tax rates",
+    "800,000",
+    "800000",
+    "2,200,000",
+    "2200000",
+    "9,000,000",
+    "9000000",
+    "13,000,000",
+    "13000000",
+    "25,000,000",
+    "25000000",
+    "50,000,000",
+    "50000000",
+    "0%",
+    "15%",
+    "18%",
+    "21%",
+    "23%",
+    "25%",
+  ];
+  return markers.some((m) => lower.includes(m));
+}
+
+/**
  * Get chunks for AI context
- * Formats query results for AI consumption
+ * Formats query results for AI consumption with summarization and better filtering
  */
 export function getChunksForAI(
   queryResponse: QueryResponse,
-  maxTokens: number = 4000
+  maxTokens: number = 2000,
+  intent: QueryIntent = "general"
 ): string {
   const chunks: string[] = [];
   let totalTokens = 0;
 
-  // Sort by relevance (high first)
-  const sortedResults = [...queryResponse.results].sort((a, b) => {
+  // Filter: Only include high and medium relevance chunks (exclude low relevance)
+  const filteredResults = queryResponse.results.filter(
+    (result) => result.relevance === "high" || result.relevance === "medium"
+  );
+
+  // If no high/medium relevance chunks, include top low relevance as fallback
+  const resultsToUse =
+    filteredResults.length > 0
+      ? filteredResults
+      : queryResponse.results.slice(0, 3);
+
+  // Sort by relevance (high first), then by score, with a slight boost for known bracket keywords
+  const boostTerms = [
+    "section 30(1)",
+    "individual income tax rates",
+    "relief allowance",
+    "800,000",
+    "800000",
+    "2,200,000",
+    "2200000",
+    "9,000,000",
+    "9000000",
+    "13,000,000",
+    "13000000",
+    "25,000,000",
+    "25000000",
+    "50,000,000",
+    "50000000",
+  ];
+  const sortedResults = [...resultsToUse].sort((a, b) => {
     const relevanceOrder = { high: 3, medium: 2, low: 1 };
+
+    // Boost scores if content contains the key terms for the 2025 brackets
+    const boostScore = (text: string) =>
+      boostTerms.some((term) => text.toLowerCase().includes(term.toLowerCase()))
+        ? 0.5
+        : 0;
+
+    const aScore = a.score + boostScore(a.chunk.content);
+    const bScore = b.score + boostScore(b.chunk.content);
+
     if (relevanceOrder[a.relevance] !== relevanceOrder[b.relevance]) {
       return relevanceOrder[b.relevance] - relevanceOrder[a.relevance];
     }
-    return b.score - a.score;
+    return bScore - aScore;
   });
 
-  for (const result of sortedResults) {
-    const chunkTokens = result.chunk.tokenEstimate;
-    if (totalTokens + chunkTokens > maxTokens) {
-      break;
-    }
+  // Limit based on intent to avoid token bloat
+  const limitByIntent = intent === "rates" ? 8 : 5;
+  const topResults = sortedResults.slice(0, limitByIntent);
 
+  // Allow at most one rate reference chunk when intent is not "rates"
+  let rateReferenceAdded = intent === "rates";
+
+  for (const result of topResults) {
     const sectionPath = result.chunk.sectionPath.join(" → ");
     const pageInfo =
       result.chunk.pageRange.start === result.chunk.pageRange.end
         ? `Page ${result.chunk.pageRange.start}`
         : `Pages ${result.chunk.pageRange.start}-${result.chunk.pageRange.end}`;
 
-    chunks.push(
-      `[${sectionPath || "Document"} - ${pageInfo}]\n${result.chunk.content}`
-    );
+    const rateChunk = isRateChunk(result.chunk.content);
 
+    // If intent is not rates, skip additional rate-heavy chunks beyond one brief reference
+    if (rateChunk && !rateReferenceAdded && intent !== "rates") {
+      const rateSummary = summarizeChunk(result.chunk, 200);
+      const rateText = `[${sectionPath || "Document"} - ${pageInfo}] (Reference)\n${rateSummary}`;
+      const rateTokens = estimateTokens(rateText);
+      if (totalTokens + rateTokens <= maxTokens) {
+        chunks.push(rateText);
+        totalTokens += rateTokens;
+        rateReferenceAdded = true;
+      }
+      continue;
+    } else if (rateChunk && intent !== "rates") {
+      // Already included a rate reference; skip extra rate chunks
+      continue;
+    }
+
+    // Summarize chunk content to reduce tokens (shorter for non-rate intents)
+    const summaryLength = intent === "rates" ? 400 : 280;
+    const summarizedContent = summarizeChunk(result.chunk, summaryLength);
+    const chunkText = `[${sectionPath || "Document"} - ${pageInfo}]\n${summarizedContent}`;
+
+    // Count tokens accurately after summarization
+    const chunkTokens = estimateTokens(chunkText);
+
+    // Check if adding this chunk would exceed limit
+    if (totalTokens + chunkTokens > maxTokens) {
+      // Try to fit a shorter version
+      const shorterSummary = summarizeChunk(result.chunk, summaryLength / 2);
+      const shorterText = `[${sectionPath || "Document"} - ${pageInfo}]\n${shorterSummary}`;
+      const shorterTokens = estimateTokens(shorterText);
+
+      if (totalTokens + shorterTokens <= maxTokens) {
+        chunks.push(shorterText);
+        totalTokens += shorterTokens;
+      }
+      break; // Stop if we can't fit even the shorter version
+    }
+
+    chunks.push(chunkText);
     totalTokens += chunkTokens;
   }
 
