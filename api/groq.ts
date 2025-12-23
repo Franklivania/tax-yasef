@@ -132,10 +132,10 @@ export default async function handler(
 
     const allowedModels = [
       "openai/gpt-oss-120b",
-      "meta-llama/llama-guard-4-12b",
       "llama-3.1-8b-instant",
       "openai/gpt-oss-safeguard-20b",
       "groq/compound",
+      "meta-llama/llama-4-maverick-17b-128e-instruct",
     ];
 
     if (!allowedModels.includes(model)) {
@@ -145,6 +145,16 @@ export default async function handler(
       } as ErrorResponse);
       return;
     }
+
+    // Model-specific max_tokens limits (if any model needs special limits)
+    const modelMaxTokens: Record<string, number> = {
+      // Add model-specific limits here if needed
+    };
+
+    // Override max_tokens if model has a specific limit
+    const effectiveMaxTokens = modelMaxTokens[model]
+      ? Math.min(max_tokens, modelMaxTokens[model])
+      : max_tokens;
 
     // Validate numeric parameters
     if (
@@ -171,7 +181,7 @@ export default async function handler(
       model,
       messages: [{ role: "user", content: prompt }],
       temperature,
-      max_tokens,
+      max_tokens: effectiveMaxTokens,
       top_p,
       frequency_penalty,
       presence_penalty,
