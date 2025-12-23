@@ -19,6 +19,9 @@ type VercelResponse = {
   end: () => void;
 };
 import { Groq } from "groq-sdk";
+import { redisGet, redisSet } from "./lib/redis.js";
+import type { ModelID } from "./types.js";
+import { ModelParams } from "./types.js";
 
 // Type definitions for request/response
 interface GroqRequest {
@@ -29,6 +32,8 @@ interface GroqRequest {
   top_p?: number;
   frequency_penalty?: number;
   presence_penalty?: number;
+  userToken?: string;
+  ipAddress?: string;
 }
 
 interface GroqResponse {
@@ -60,6 +65,107 @@ function handleCORS(res: VercelResponse): boolean {
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   return true;
+}
+
+// Get client IP from request
+function getClientIP(req: VercelRequest): string | null {
+  const forwarded = req.headers?.["x-forwarded-for"];
+  if (forwarded) {
+    const ips = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+    return ips.split(",")[0].trim();
+  }
+  return (req.headers?.["x-real-ip"] as string | null) || null;
+}
+
+// Log usage to Redis
+async function logUsageToKV(data: {
+  userToken: string;
+  ipAddress: string | null;
+  model: string;
+  tokens: number;
+}): Promise<void> {
+  try {
+    // Find model ID from model value
+    const modelEntry = Object.entries(ModelParams).find(
+      ([, value]) => value === data.model
+    );
+    if (!modelEntry) return;
+
+    const modelID = modelEntry[0] as ModelID;
+    const now = Date.now();
+
+    // Update user usage
+    const userKey = `user:${data.userToken}`;
+    const existingUser = await redisGet<{
+      userToken: string;
+      ipAddress: string | null;
+      lastActive: number;
+      modelUsage: Record<
+        ModelID,
+        {
+          tokensUsedDay: number;
+          tokensRemainingDay: number;
+          requestsDay: number;
+        }
+      >;
+    }>(userKey);
+
+    const modelUsage = existingUser?.modelUsage || {};
+    const currentUsage = modelUsage[modelID] || {
+      tokensUsedDay: 0,
+      tokensRemainingDay: 0,
+      requestsDay: 0,
+    };
+
+    const { ModelLimits } = await import("./types.js");
+    const limits = ModelLimits[modelID];
+
+    modelUsage[modelID] = {
+      tokensUsedDay: currentUsage.tokensUsedDay + data.tokens,
+      tokensRemainingDay: Math.max(
+        0,
+        limits.tokensPerDay - (currentUsage.tokensUsedDay + data.tokens)
+      ),
+      requestsDay: currentUsage.requestsDay + 1,
+    };
+
+    await redisSet(
+      userKey,
+      {
+        userToken: data.userToken,
+        ipAddress: data.ipAddress,
+        lastActive: now,
+        modelUsage,
+      },
+      { ex: 86400 * 7 }
+    ); // Expire after 7 days
+
+    // Update model stats
+    const statsKey = `model:stats:${modelID}`;
+    const existingStats = await redisGet<{
+      totalTokensUsed: number;
+      totalRequests: number;
+      activeUsers: string[];
+      lastUpdated: number;
+    }>(statsKey);
+
+    const activeUsers = new Set(existingStats?.activeUsers || []);
+    activeUsers.add(data.userToken);
+
+    await redisSet(
+      statsKey,
+      {
+        totalTokensUsed: (existingStats?.totalTokensUsed || 0) + data.tokens,
+        totalRequests: (existingStats?.totalRequests || 0) + 1,
+        activeUsers: Array.from(activeUsers),
+        lastUpdated: now,
+      },
+      { ex: 86400 * 2 }
+    ); // Expire after 2 days
+  } catch (error) {
+    console.error("Error logging usage to Redis:", error);
+    throw error;
+  }
 }
 
 export default async function handler(
@@ -119,6 +225,8 @@ export default async function handler(
       top_p = 1,
       frequency_penalty = 0,
       presence_penalty = 0,
+      userToken,
+      ipAddress,
     } = req.body as GroqRequest;
 
     // Validate prompt length (prevent abuse)
@@ -212,6 +320,19 @@ export default async function handler(
         : undefined,
       model: response.model || model,
     };
+
+    // Log usage to KV (non-blocking)
+    if (userToken && response.usage) {
+      logUsageToKV({
+        userToken,
+        ipAddress: ipAddress || getClientIP(req),
+        model,
+        tokens: response.usage.total_tokens || 0,
+      }).catch((err) => {
+        console.error("Failed to log usage to KV:", err);
+        // Don't fail the request if logging fails
+      });
+    }
 
     handleCORS(res);
     res.status(200).json(successResponse);

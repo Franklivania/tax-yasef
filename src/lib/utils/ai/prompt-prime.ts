@@ -187,7 +187,7 @@ export async function buildSystemPrompt(
   calculationsContext?: string
 ): Promise<string> {
   const { getAIContextFromQuery, isDocumentLoaded } =
-    await import("./document-manager");
+    await import("../document/document-manager");
 
   // Get relevant document chunks based on user query
   let taxActContent = "";
@@ -316,7 +316,7 @@ export async function initializePromptPrime(): Promise<void> {
   // Start initialization
   initializationPromise = (async () => {
     try {
-      const { loadDocument } = await import("./document-manager");
+      const { loadDocument } = await import("../document/document-manager");
       const pdfUrl = getTaxActPDFUrl();
 
       if (import.meta.env.DEV) {

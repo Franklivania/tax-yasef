@@ -1,5 +1,5 @@
-import { useTaxCalculationStore } from "../tax-calculator";
-import { formatCurrency } from "../tax-calculator";
+import { useTaxCalculationStore } from "../../tax-calculator";
+import { formatCurrency } from "../../tax-calculator";
 
 export function buildCalculationsContext(): string {
   const calculations = useTaxCalculationStore.getState().getAllCalculations();

@@ -3,7 +3,7 @@ import { useTokenUsageStore } from "@/lib/store/useTokenUsageStore";
 import { useModelStore } from "@/lib/store/useModelStore";
 import { useNotificationStore } from "@/lib/store/useNotificationStore";
 import { ModelLimits } from "@/lib/types/models";
-import { formatResetTime, getResetTimeString } from "@/lib/utils/reset-time";
+import { formatResetTime, getResetTimeString } from "@/lib/utils/time";
 
 export default function TokenUsageNotification() {
   const currentModel = useModelStore((state) => state.model);

@@ -202,7 +202,7 @@ const rateGuards = [
 
 ### 3.2 Enhanced System Prompt
 
-**File**: `src/lib/utils/prompt-prime.ts`
+**File**: `src/lib/utils/ai/prompt-prime.ts`
 
 **Changes**:
 
@@ -348,7 +348,7 @@ function sanitizeRatesInContent(
 
 ### 5.3 Query Validation
 
-**File**: `src/lib/utils/document-query.ts` (extend)
+**File**: `src/lib/utils/document/document-query.ts` (extend)
 
 **Changes**:
 
@@ -464,7 +464,7 @@ function scoreChunkQuality(
 
 ### 7.2 Document Manager Updates
 
-**File**: `src/lib/utils/document-manager.ts`
+**File**: `src/lib/utils/document/document-manager.ts`
 
 **Changes**:
 
@@ -575,9 +575,9 @@ function getExtractedRates(): ExtractedTaxRate[] | null;
 ## Files to Modify
 
 1. `src/lib/utils/document-ingestion.ts` - Add progress tracking
-2. `src/lib/utils/prompt-prime.ts` - Add rate guards to prompt
-3. `src/lib/utils/document-manager.ts` - Add validation and rate extraction
-4. `src/lib/utils/document-query.ts` - Add injection prevention
+2. `src/lib/utils/ai/prompt-prime.ts` - Add rate guards to prompt
+3. `src/lib/utils/document/document-manager.ts` - Add validation and rate extraction
+4. `src/lib/utils/document/document-query.ts` - Add injection prevention
 5. `src/lib/initialize.ts` - Enhanced initialization
 6. `src/pages/chat.tsx` - Add document status banner
 

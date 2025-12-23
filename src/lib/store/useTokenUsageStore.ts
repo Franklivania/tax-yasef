@@ -208,6 +208,34 @@ export const useTokenUsageStore = create<TokenUsageStore>()(
   )
 );
 
+// Sync usage data to server
+async function syncUsageToServer() {
+  if (typeof window === "undefined") return;
+
+  try {
+    const state = useTokenUsageStore.getState();
+    const userToken = useUserStore.getState().userToken;
+    const ipAddress = useUserStore.getState().ipAddress;
+
+    await fetch("/api/tracking/sync", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userToken,
+        ipAddress,
+        modelUsage: state.modelUsage,
+      }),
+    });
+  } catch (error) {
+    // Silently fail - don't interrupt user experience
+    if (import.meta.env.DEV) {
+      console.warn("Failed to sync usage data:", error);
+    }
+  }
+}
+
 if (typeof window !== "undefined") {
   const syncToken = () => {
     const userToken = useUserStore.getState().userToken;
@@ -222,5 +250,37 @@ if (typeof window !== "undefined") {
     if (state.initialized) {
       syncToken();
     }
+  });
+
+  // Sync usage data periodically (every 30 seconds)
+  setInterval(() => {
+    syncUsageToServer();
+  }, 30000);
+
+  // Sync immediately on load
+  setTimeout(() => {
+    syncUsageToServer();
+  }, 2000);
+
+  // Sync after each usage update
+  const originalAddUsage = useTokenUsageStore.getState().addUsage;
+  useTokenUsageStore.setState({
+    addUsage: (model, tokens) => {
+      originalAddUsage(model, tokens);
+      // Debounce sync - only sync after 5 seconds of inactivity
+      const timeoutId = (
+        window as Window & {
+          __usageSyncTimeout?: ReturnType<typeof setTimeout>;
+        }
+      ).__usageSyncTimeout;
+      if (timeoutId) clearTimeout(timeoutId);
+      (
+        window as Window & {
+          __usageSyncTimeout?: ReturnType<typeof setTimeout>;
+        }
+      ).__usageSyncTimeout = setTimeout(() => {
+        syncUsageToServer();
+      }, 5000);
+    },
   });
 }

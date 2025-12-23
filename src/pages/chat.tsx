@@ -22,7 +22,7 @@ import { useMessageStore } from "@/lib/store/useMessageStore";
 import { useHighContrastStore } from "@/lib/store/useHighContrastStore";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
-import { getCookie, setCookie } from "@/lib/utils/cookies";
+import { getCookie, setCookie } from "@/lib/utils/storage";
 import { SROnly } from "@/components/accessibility/sr-only";
 import { useSearchParams } from "react-router-dom";
 
