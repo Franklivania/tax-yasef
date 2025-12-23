@@ -3,9 +3,6 @@
  * Functions for reading PDF documents, guarding prompts, and priming AI for tax evaluations
  */
 
-// PDF worker configuration is now handled in pdf-extraction.ts
-
-// Blocked response message
 const BLOCKED_RESPONSE =
   "We do not do that heare, if you no wan guard yasef, shaa leave this place comot. \n ask better question abeg, make we continue.";
 
@@ -187,7 +184,7 @@ export async function buildSystemPrompt(
   calculationsContext?: string
 ): Promise<string> {
   const { getAIContextFromQuery, isDocumentLoaded } =
-    await import("./document-manager");
+    await import("../document/document-manager");
 
   // Get relevant document chunks based on user query
   let taxActContent = "";
@@ -316,7 +313,7 @@ export async function initializePromptPrime(): Promise<void> {
   // Start initialization
   initializationPromise = (async () => {
     try {
-      const { loadDocument } = await import("./document-manager");
+      const { loadDocument } = await import("../document/document-manager");
       const pdfUrl = getTaxActPDFUrl();
 
       if (import.meta.env.DEV) {

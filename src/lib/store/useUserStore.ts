@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { getUserIP, getUserBrowserInfo } from "../user-details";
-import { getCookie, setCookie } from "../utils/cookies";
+import { getCookie, setCookie } from "../utils/storage";
 
 type UserStore = {
   userToken: string;

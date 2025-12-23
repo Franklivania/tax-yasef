@@ -1,6 +1,6 @@
 import { useUserStore } from "./store/useUserStore";
 import { useTokenUsageStore } from "./store/useTokenUsageStore";
-import { initializePromptPrime } from "./utils/prompt-prime";
+import { initializePromptPrime } from "./utils/ai";
 
 export async function initializeApp(): Promise<void> {
   if (typeof window === "undefined") return;
