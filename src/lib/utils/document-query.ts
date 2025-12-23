@@ -149,10 +149,44 @@ export function queryDocument(
 }
 
 /**
- * Estimate tokens in text (rough approximation: ~4 characters per token)
+ * Intent classification to steer retrieval and formatting
  */
-function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
+export type QueryIntent = "rates" | "process" | "budget" | "general";
+
+export function detectIntent(query: string): QueryIntent {
+  const q = query.toLowerCase();
+  if (
+    q.includes("rate") ||
+    q.includes("bracket") ||
+    q.includes("band") ||
+    q.includes("taxable income") ||
+    q.includes("800") ||
+    q.includes("2,200,000") ||
+    q.includes("9,000,000") ||
+    q.includes("13,000,000") ||
+    q.includes("25,000,000") ||
+    q.includes("50,000,000")
+  ) {
+    return "rates";
+  }
+  if (
+    q.includes("pay") ||
+    q.includes("file") ||
+    q.includes("return") ||
+    q.includes("tin") ||
+    q.includes("payment")
+  ) {
+    return "process";
+  }
+  if (
+    q.includes("spend") ||
+    q.includes("budget") ||
+    q.includes("net income") ||
+    q.includes("take home")
+  ) {
+    return "budget";
+  }
+  return "general";
 }
 
 /**
@@ -212,12 +246,48 @@ function summarizeChunk(chunk: Chunk, maxLength: number = 300): string {
 }
 
 /**
+ * Lightweight token estimate (~4 chars per token)
+ */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+function isRateChunk(content: string): boolean {
+  const lower = content.toLowerCase();
+  const markers = [
+    "section 30(1)",
+    "income tax rates",
+    "tax rates",
+    "800,000",
+    "800000",
+    "2,200,000",
+    "2200000",
+    "9,000,000",
+    "9000000",
+    "13,000,000",
+    "13000000",
+    "25,000,000",
+    "25000000",
+    "50,000,000",
+    "50000000",
+    "0%",
+    "15%",
+    "18%",
+    "21%",
+    "23%",
+    "25%",
+  ];
+  return markers.some((m) => lower.includes(m));
+}
+
+/**
  * Get chunks for AI context
  * Formats query results for AI consumption with summarization and better filtering
  */
 export function getChunksForAI(
   queryResponse: QueryResponse,
-  maxTokens: number = 2000
+  maxTokens: number = 2000,
+  intent: QueryIntent = "general"
 ): string {
   const chunks: string[] = [];
   let totalTokens = 0;
@@ -269,8 +339,12 @@ export function getChunksForAI(
     return bScore - aScore;
   });
 
-  // Limit to top 8 most relevant chunks to avoid token bloat
-  const topResults = sortedResults.slice(0, 8);
+  // Limit based on intent to avoid token bloat
+  const limitByIntent = intent === "rates" ? 8 : 5;
+  const topResults = sortedResults.slice(0, limitByIntent);
+
+  // Allow at most one rate reference chunk when intent is not "rates"
+  let rateReferenceAdded = intent === "rates";
 
   for (const result of topResults) {
     const sectionPath = result.chunk.sectionPath.join(" → ");
@@ -279,8 +353,27 @@ export function getChunksForAI(
         ? `Page ${result.chunk.pageRange.start}`
         : `Pages ${result.chunk.pageRange.start}-${result.chunk.pageRange.end}`;
 
-    // Summarize chunk content to reduce tokens
-    const summarizedContent = summarizeChunk(result.chunk, 400);
+    const rateChunk = isRateChunk(result.chunk.content);
+
+    // If intent is not rates, skip additional rate-heavy chunks beyond one brief reference
+    if (rateChunk && !rateReferenceAdded && intent !== "rates") {
+      const rateSummary = summarizeChunk(result.chunk, 200);
+      const rateText = `[${sectionPath || "Document"} - ${pageInfo}] (Reference)\n${rateSummary}`;
+      const rateTokens = estimateTokens(rateText);
+      if (totalTokens + rateTokens <= maxTokens) {
+        chunks.push(rateText);
+        totalTokens += rateTokens;
+        rateReferenceAdded = true;
+      }
+      continue;
+    } else if (rateChunk && intent !== "rates") {
+      // Already included a rate reference; skip extra rate chunks
+      continue;
+    }
+
+    // Summarize chunk content to reduce tokens (shorter for non-rate intents)
+    const summaryLength = intent === "rates" ? 400 : 280;
+    const summarizedContent = summarizeChunk(result.chunk, summaryLength);
     const chunkText = `[${sectionPath || "Document"} - ${pageInfo}]\n${summarizedContent}`;
 
     // Count tokens accurately after summarization
@@ -289,7 +382,7 @@ export function getChunksForAI(
     // Check if adding this chunk would exceed limit
     if (totalTokens + chunkTokens > maxTokens) {
       // Try to fit a shorter version
-      const shorterSummary = summarizeChunk(result.chunk, 200);
+      const shorterSummary = summarizeChunk(result.chunk, summaryLength / 2);
       const shorterText = `[${sectionPath || "Document"} - ${pageInfo}]\n${shorterSummary}`;
       const shorterTokens = estimateTokens(shorterText);
 

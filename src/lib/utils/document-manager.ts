@@ -8,6 +8,8 @@ import {
   queryDocument,
   getChunksForAI,
   type QueryResponse,
+  detectIntent,
+  type QueryIntent,
 } from "./document-query";
 
 let currentDocument: IngestedDocument | null = null;
@@ -57,6 +59,8 @@ export function getAIContextFromQuery(
     return null;
   }
 
+  const intent: QueryIntent = detectIntent(query);
+
   // Improved query with better relevance filtering
   const queryResponse = queryCurrentDocument(query, {
     limit: 8, // Focus on the most relevant
@@ -74,12 +78,12 @@ export function getAIContextFromQuery(
       }
     );
     if (fallbackResponse.results.length > 0) {
-      return getChunksForAI(fallbackResponse, maxTokens);
+      return getChunksForAI(fallbackResponse, maxTokens, intent);
     }
     return null;
   }
 
-  return getChunksForAI(queryResponse, maxTokens);
+  return getChunksForAI(queryResponse, maxTokens, intent);
 }
 
 /**
