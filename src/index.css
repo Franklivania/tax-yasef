@@ -272,6 +272,37 @@ button:disabled {
   background: var(--muted);
 }
 
+.admin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted-foreground) transparent;
+}
+
+.admin-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb:active {
+  background: var(--primary);
+}
+
 .gradient-border {
   border: 0.25em solid;
   border-image: linear-gradient(to right, var(--primary), var(--secondary)) 1

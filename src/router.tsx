@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import LoadingScreen from "./pages/_loading";
+import AdminPage from "./pages/admin/page";
 
 // Lazy load all route components for code splitting
 const App = lazy(() => import("./App"));
@@ -31,6 +32,14 @@ const routes: RouteObject[] = [
   {
     path: "/loading",
     element: <LoadingScreen />,
+  },
+  {
+    path: "/admin",
+    element: (
+      <Suspense fallback={<LoadingScreen />}>
+        <AdminPage />
+      </Suspense>
+    ),
   },
   {
     path: "*",

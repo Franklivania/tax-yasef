@@ -18,7 +18,7 @@ import {
   storeDocumentCache,
   getDocumentCache,
   hasDocumentCache,
-} from "./indexeddb";
+} from "../storage/indexeddb";
 import type { StructureNode } from "./structure-builder";
 import type { Chunk } from "./chunking";
 

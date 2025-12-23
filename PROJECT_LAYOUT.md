@@ -104,16 +104,12 @@ lib/
 ├── types/                  # TypeScript type definitions
 │   ├── models.ts          # AI model types
 │   └── tax.ts             # Tax calculation types
-├── utils/                  # Utility functions
-│   ├── security.ts        # Security utilities (XSS, sanitization)
-│   ├── rate-limiter.ts    # Frontend rate limiting
-│   ├── csrf.ts            # CSRF protection
-│   ├── cookies.ts         # Cookie management
-│   ├── chunking.ts        # Document chunking
-│   ├── document-*.ts      # Document processing utilities
-│   ├── prompt-prime.ts    # AI prompt building
-│   ├── calculations-context.ts  # Tax calculation context
-│   └── ... (other utilities)
+├── utils/                  # Utility functions (grouped)
+│   ├── ai/                # Prompt priming, calculations context
+│   ├── document/          # Document processing, chunking, indexing, hashing
+│   ├── security/          # Sanitization, CSRF, rate limiting
+│   ├── storage/           # Cookies, IndexedDB caching
+│   └── time/              # Reset time helpers
 ├── markdown-renderer.tsx  # Markdown parsing and rendering
 ├── tax-calculator.ts      # Tax calculation logic
 ├── user-details.ts        # User identification utilities

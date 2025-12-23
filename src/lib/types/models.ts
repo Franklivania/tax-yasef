@@ -24,6 +24,16 @@ export type ModelLimits = {
   requestsPerDay: number;
 };
 
+// Total token pool for each model (system-wide allocation)
+// Users are allocated tokens from this pool
+export const ModelTotalPool: Record<ModelID, number> = {
+  "GPT-4 OSS": 2000000, // 2M tokens total pool
+  "GPT-OSS": 2000000, // 2M tokens total pool
+  "Llama 3.1": 5000000, // 5M tokens total pool
+  "Llama 4 Maverick": 5000000, // 5M tokens total pool
+  "Groq Compound": 2000000, // 2M tokens total pool
+} as const;
+
 export const ModelParams: Record<ModelID, Models> = {
   "GPT-4 OSS": "openai/gpt-oss-120b",
   "Llama 3.1": "llama-3.1-8b-instant",
