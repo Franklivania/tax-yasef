@@ -7,7 +7,6 @@ import { Suspense, lazy } from "react";
 import LoadingScreen from "./pages/_loading";
 import AdminPage from "./pages/admin/page";
 
-// Lazy load all route components for code splitting
 const App = lazy(() => import("./App"));
 const ChatDisplay = lazy(() => import("./pages/chat"));
 const NotFound = lazy(() => import("./pages/_not-found"));
