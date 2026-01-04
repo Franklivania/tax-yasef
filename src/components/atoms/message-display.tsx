@@ -157,7 +157,7 @@ export default function MessageDisplay({
                 }}
               >
                 <p
-                  className={`font-nunito whitespace-pre-wrap ${isMobile ? "text-sm" : "text-base"}`}
+                  className={`font-nunito whitespace-pre-wrap dark:text-white ${isMobile ? "text-sm" : "text-base"}`}
                   style={{
                     wordBreak: "break-word",
                     overflowWrap: "break-word",
