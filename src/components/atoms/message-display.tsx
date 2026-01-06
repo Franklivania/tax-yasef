@@ -11,6 +11,7 @@ import { useNotificationStore } from "@/lib/store/useNotificationStore";
 import { useModelStore } from "@/lib/store/useModelStore";
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
 import { SROnly } from "../accessibility/sr-only";
+import { useDocsStore } from "@/lib/store/useDocsStore";
 
 export default function MessageDisplay({
   onRegenerate,
@@ -24,6 +25,7 @@ export default function MessageDisplay({
   const addNotification = useNotificationStore(
     (state) => state.addNotification
   );
+  const selectedDocId = useDocsStore((state) => state.selectedDocId);
   const model = useModelStore((state) => state.model);
   const { isMobile } = useDeviceSize();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,7 +81,8 @@ export default function MessageDisplay({
       const calculationsContext = buildCalculationsContext();
       const systemPrompt = await buildSystemPrompt(
         lastUserMessage.content,
-        calculationsContext
+        calculationsContext,
+        { selectedDocId }
       );
       const response = await groqService.createCompletion(
         promptResult.prompt,

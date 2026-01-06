@@ -16,6 +16,7 @@ import { useNotificationStore } from "@/lib/store/useNotificationStore";
 import { useModelStore } from "@/lib/store/useModelStore";
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
 import { SROnly } from "./sr-only";
+import { useDocsStore } from "@/lib/store/useDocsStore";
 
 interface VirtualMessageListProps {
   onRegenerate?: () => void;
@@ -75,6 +76,7 @@ export default function VirtualMessageList({
   const addNotification = useNotificationStore(
     (state) => state.addNotification
   );
+  const selectedDocId = useDocsStore((state) => state.selectedDocId);
   const model = useModelStore((state) => state.model);
   const { isMobile } = useDeviceSize();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -175,7 +177,8 @@ export default function VirtualMessageList({
       const calculationsContext = buildCalculationsContext();
       const systemPrompt = await buildSystemPrompt(
         lastUserMessage.content,
-        calculationsContext
+        calculationsContext,
+        { selectedDocId }
       );
       const response = await groqService.createCompletion(
         promptResult.prompt,
