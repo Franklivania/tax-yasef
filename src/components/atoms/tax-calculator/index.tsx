@@ -1,7 +1,15 @@
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, Info } from "lucide-react";
 import { useMemo, useState } from "react";
+import useDeviceSize from "@/lib/hooks/useDeviceSize";
 import TaxInfoModalManager from "./tax-info-modal-manager";
 import type { TaxTabConfig, TaxTabKey } from "./types";
 import { isTaxTabKey } from "./types";
@@ -59,6 +67,7 @@ export default function TaxCalculator() {
   const [activeTab, setActiveTab] = useState<TaxTabKey>(defaultTab);
   const [infoOpen, setInfoOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const { isMobile } = useDeviceSize();
 
   const activeTabLabel = useMemo(
     () => tabs.find((t) => t.value === activeTab)?.label ?? "Tax Calculator",
@@ -87,13 +96,33 @@ export default function TaxCalculator() {
             }}
           >
             <section className="flex items-center gap-2 justify-between">
-              <TabsList className="flex flex-wrap h-auto">
-                {tabs.map((t) => (
-                  <TabsTrigger key={t.value} value={t.value}>
-                    {t.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+              {isMobile ? (
+                <Select
+                  value={activeTab}
+                  onValueChange={(v) => {
+                    if (isTaxTabKey(v)) setActiveTab(v);
+                  }}
+                >
+                  <SelectTrigger className="h-10 w-full max-w-[260px]">
+                    <SelectValue placeholder={activeTabLabel} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tabs.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <TabsList className="flex flex-wrap h-auto">
+                  {tabs.map((t) => (
+                    <TabsTrigger key={t.value} value={t.value}>
+                      {t.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              )}
 
               <div className="flex items-center gap-2">
                 <Button

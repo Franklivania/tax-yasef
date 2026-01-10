@@ -15,6 +15,7 @@ import type {
   CalculatorHistoryEntry,
   AppliedAmountLine,
 } from "@/lib/types/calculator-history";
+import { Switch } from "@/components/ui/switch";
 
 export function SelfAssessmentTab() {
   const [annualIncome, setAnnualIncome] = useState("");
@@ -27,6 +28,11 @@ export function SelfAssessmentTab() {
     useState("");
   const [payeCredit, setPayeCredit] = useState("");
   const [whtCredit, setWhtCredit] = useState("");
+  const [additionalDeductions, setAdditionalDeductions] = useState(false);
+
+  const handleDeducttionsTrigger = () => {
+    setAdditionalDeductions((prev) => !prev);
+  };
 
   const computation = useMemo(() => {
     return computeSelfAssessment({
@@ -129,60 +135,77 @@ export function SelfAssessmentTab() {
               onChange={setAnnualIncome}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <MoneyField
-                id="sa-pension"
-                label="Approved pension (₦)"
-                value={pensionApproved}
-                onChange={setPensionApproved}
-              />
-              <MoneyField
-                id="sa-nhf"
-                label="NHF (₦)"
-                value={nhf}
-                onChange={setNhf}
-              />
-              <MoneyField
-                id="sa-nhis"
-                label="NHIS (₦)"
-                value={nhis}
-                onChange={setNhis}
-              />
-              <MoneyField
-                id="sa-life"
-                label="Life insurance / annuity (₦)"
-                value={lifeInsuranceOrAnnuity}
-                onChange={setLifeInsuranceOrAnnuity}
-              />
-              <MoneyField
-                id="sa-rent"
-                label="Rent paid (₦)"
-                value={rentPaid}
-                onChange={setRentPaid}
-                helpText="Relief = min(20% of rent, ₦500,000)"
-              />
-              <MoneyField
-                id="sa-mortgage"
-                label="Mortgage interest (owner-occupied) (₦)"
-                value={mortgageInterestOwnerOccupied}
-                onChange={setMortgageInterestOwnerOccupied}
+            <div className="w-full flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {additionalDeductions
+                  ? "Hide Additional deductions"
+                  : "Show Additional deductions"}
+              </p>
+
+              <Switch
+                checked={additionalDeductions}
+                onCheckedChange={handleDeducttionsTrigger}
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <MoneyField
-                id="sa-paye"
-                label="PAYE already deducted (credit) (₦)"
-                value={payeCredit}
-                onChange={setPayeCredit}
-              />
-              <MoneyField
-                id="sa-wht"
-                label="WHT already deducted (credit) (₦)"
-                value={whtCredit}
-                onChange={setWhtCredit}
-              />
-            </div>
+            {additionalDeductions && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <MoneyField
+                    id="sa-pension"
+                    label="Approved pension (₦)"
+                    value={pensionApproved}
+                    onChange={setPensionApproved}
+                  />
+                  <MoneyField
+                    id="sa-nhf"
+                    label="NHF (₦)"
+                    value={nhf}
+                    onChange={setNhf}
+                  />
+                  <MoneyField
+                    id="sa-nhis"
+                    label="NHIS (₦)"
+                    value={nhis}
+                    onChange={setNhis}
+                  />
+                  <MoneyField
+                    id="sa-life"
+                    label="Life insurance / annuity (₦)"
+                    value={lifeInsuranceOrAnnuity}
+                    onChange={setLifeInsuranceOrAnnuity}
+                  />
+                  <MoneyField
+                    id="sa-rent"
+                    label="Rent paid (₦)"
+                    value={rentPaid}
+                    onChange={setRentPaid}
+                    helpText="Relief = min(20% of rent, ₦500,000)"
+                  />
+                  <MoneyField
+                    id="sa-mortgage"
+                    label="Mortgage interest (owner-occupied) (₦)"
+                    value={mortgageInterestOwnerOccupied}
+                    onChange={setMortgageInterestOwnerOccupied}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <MoneyField
+                    id="sa-paye"
+                    label="PAYE already deducted (credit) (₦)"
+                    value={payeCredit}
+                    onChange={setPayeCredit}
+                  />
+                  <MoneyField
+                    id="sa-wht"
+                    label="WHT already deducted (credit) (₦)"
+                    value={whtCredit}
+                    onChange={setWhtCredit}
+                  />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

@@ -35,11 +35,18 @@ export default function NavHandler() {
           to={item.link}
           className="block"
           onClick={() => setMenuOpen(false)}
+          target="_blank"
+          rel="noopener noreferrer"
         >
           {button}
         </Link>
       ) : (
-        <Link to={item.link} className="inline-flex">
+        <Link
+          to={item.link}
+          className="inline-flex"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {button}
         </Link>
       );
