@@ -9,7 +9,8 @@ import { parseAmount } from "../components/parse-amount";
 import { SummaryRow } from "../components/summary-row";
 import { GenericAiSummaryCard } from "../components/generic-ai-summary-card";
 import { SaveCalculationButton } from "../components/save-calculation-button";
-import { MonthlySavingsTable } from "../components/monthly-savings-table";
+
+import { MonthlySavingsAccordion } from "../components/monthly-savings-accordion";
 import { MONTH_NAMES, buildMonthlyPlan } from "@/lib/types/calculator-history";
 import type {
   CalculatorHistoryEntry,
@@ -248,17 +249,10 @@ export function PetroleumSpecialTab() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Monthly savings plan</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <MonthlySavingsTable
-              title="Set aside monthly to cover tax"
-              rows={monthlyPlan}
-            />
-          </CardContent>
-        </Card>
+        <MonthlySavingsAccordion
+          tableTitle="Set aside monthly to cover tax"
+          rows={monthlyPlan}
+        />
 
         <Card>
           <CardHeader className="pb-2">

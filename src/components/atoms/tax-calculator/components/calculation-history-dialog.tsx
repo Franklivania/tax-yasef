@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/tax-calculator";
 import { useCalculatorHistoryStore } from "@/lib/store/useCalculatorHistoryStore";
 import type { CalculatorHistoryEntry } from "@/lib/types/calculator-history";
-import { MonthlySavingsTable } from "./monthly-savings-table";
+
+import { MonthlySavingsAccordion } from "./monthly-savings-accordion";
 import { BandBreakdownAccordion } from "./band-breakdown-accordion";
 import { FlatBreakdownAccordion } from "./flat-breakdown-accordion";
 
@@ -223,19 +224,10 @@ export function CalculationHistoryDialog({ open, onOpenChange }: Props) {
                   </Card>
                 ) : null}
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">
-                      Monthly savings plan
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <MonthlySavingsTable
-                      title="12-month savings target"
-                      rows={selected.monthlyPlan}
-                    />
-                  </CardContent>
-                </Card>
+                <MonthlySavingsAccordion
+                  tableTitle="12-month savings target"
+                  rows={selected.monthlyPlan}
+                />
 
                 {selected.kind === "income-tax" ? (
                   <Card>
