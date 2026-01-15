@@ -11,9 +11,11 @@ import AboutModal from "../modals/about-modal";
 export default function NavHandler() {
   const { isMobile } = useDeviceSize();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [learnOpen, setLearnOpen] = useState(false);
 
   const renderItem = (item: NavItem, variant: "mobile" | "desktop") => {
     const isMobileVariant = variant === "mobile";
+    const isLearn = "link" in item && item.label.toLowerCase() === "learn";
     const button = (
       <Button
         variant="ghost"
@@ -22,14 +24,39 @@ export default function NavHandler() {
           isMobileVariant ? "w-full justify-start" : "text-sm whitespace-nowrap"
         }
         aria-label={item.label}
-        onClick={isMobileVariant ? () => setMenuOpen(false) : undefined}
+        onClick={
+          isLearn
+            ? () => setLearnOpen(true)
+            : isMobileVariant
+              ? () => setMenuOpen(false)
+              : undefined
+        }
       >
-        <Icon icon={item.icon} className="size-4" />
+        {/* <Icon icon={item.icon} className="size-4" /> */}
         <span className="ml-2">{item.label}</span>
       </Button>
     );
 
     if ("link" in item) {
+      if (isLearn) {
+        return (
+          <Popover open={learnOpen} onOpenChange={setLearnOpen}>
+            <PopoverTrigger asChild>{button}</PopoverTrigger>
+            <PopoverContent
+              side={isMobileVariant ? "right" : "bottom"}
+              align="start"
+              sideOffset={8}
+              className="w-56"
+            >
+              <p className="text-sm font-medium">Coming soon</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Learn is still in progress. Check back soon.
+              </p>
+            </PopoverContent>
+          </Popover>
+        );
+      }
+
       return isMobileVariant ? (
         <Link
           to={item.link}

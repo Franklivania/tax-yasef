@@ -76,29 +76,47 @@
 
 <body>
   <!-- Immediate Loading Screen - Shows before React loads -->
-  <div id="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background, #ffffff); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2rem;">
+  <div id="loading-screen"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background, #ffffff); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2rem;">
     <div style="width: 192px; height: 192px; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;">
       <img src="/logo.svg" alt="Tax Yasef" style="width: 100%; height: 100%;" id="loading-logo" />
     </div>
     <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
-      <div style="width: 48px; height: 48px; border: 3px solid var(--muted, #e5e7eb); border-top-color: var(--primary, #000000); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-      <p style="color: var(--muted-foreground, #6b7280); font-family: 'Nunito', sans-serif; font-size: 0.875rem; text-align: center;">Loading Tax Yasef...</p>
+      <div
+        style="width: 48px; height: 48px; border: 3px solid var(--muted, #e5e7eb); border-top-color: var(--primary, #000000); border-radius: 50%; animation: spin 1s linear infinite;">
+      </div>
+      <p
+        style="color: var(--muted-foreground, #6b7280); font-family: 'Nunito', sans-serif; font-size: 0.875rem; text-align: center;">
+        Loading Tax Yasef...</p>
     </div>
-    <p style="color: var(--foreground, #121212); font-family: 'Nunito', sans-serif; font-size: 1.125rem; font-weight: 600; text-align: center; max-width: 32rem; padding: 0 1rem;">
+    <p
+      style="color: var(--foreground, #121212); font-family: 'Nunito', sans-serif; font-size: 1.125rem; font-weight: 600; text-align: center; max-width: 32rem; padding: 0 1rem;">
       Make e no do you like film. Understand wetin dey sup before e reach...
     </p>
   </div>
   <style>
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
+
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
     }
+
     .dark #loading-screen {
       background: var(--background, #121212);
     }
+
     .dark #loading-logo {
       content: url('/logo-dark.svg');
     }
@@ -120,6 +138,7 @@
         }
       }
       </script>
+  <script async src="https://tally.so/widgets/embed.js"></script>
 </body>
 
 </html>
