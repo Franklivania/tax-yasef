@@ -6,15 +6,10 @@ import {
   useCallback,
 } from "react";
 import { lazy, Suspense } from "react";
-import ChatInput from "@/components/atoms/chat-input";
 import ChatHeader from "@/components/layout/chat-header";
-import NotificationBanner from "@/components/atoms/notification-banner";
 import TokenUsageNotification from "@/components/atoms/token-usage-notification";
 import { OfflineIndicator } from "@/components/accessibility/offline-indicator";
 import Loader from "@/components/ui/loader";
-
-// Lazy load heavy components for code splitting
-const MessageDisplay = lazy(() => import("@/components/atoms/message-display"));
 const TaxCalculator = lazy(() => import("@/components/atoms/tax-calculator"));
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
 import { useOpen } from "@/lib/hooks/useOpen";
@@ -25,6 +20,7 @@ import { Icon } from "@iconify/react";
 import { getCookie, setCookie } from "@/lib/utils/storage";
 import { SROnly } from "@/components/accessibility/sr-only";
 import { useSearchParams } from "react-router-dom";
+import ChatDisplayContainer from "@/components/sections/chat-display-container";
 
 const TAX_CALCULATOR_COOKIE_NAME = "tax-yasef-calculator-state";
 const COOKIE_EXPIRY_DAYS = 15;
@@ -208,123 +204,48 @@ export default function ChatDisplay() {
       </SROnly>
       <TokenUsageNotification />
       <OfflineIndicator />
-      <div
+
+      <section
         className="relative w-full flex flex-col h-screen transition-all duration-300 ease-in-out overflow-hidden fancy-scrollbar"
         style={{
-          width: open ? (isMobile ? "100%" : "calc(100% - 420px)") : "100%",
+          width: open ? (isMobile ? "100%" : "calc(100% - 35vw)") : "100%",
           transform: isMobile && open ? "translateX(-10%)" : "translateX(0)",
           maxWidth: "100vw",
         }}
         onClick={isMobile && open ? () => setOpen(false) : undefined}
+        role="region"
+        aria-label="Tax Calculator"
       >
         <header
-          className={`fixed top-0 left-0 w-full h-max z-50 ${isMobile ? "p-2 bg-background/95 backdrop-blur-sm border-b border-b-muted" : "p-4"}`}
+          className={`fixed top-0 left-0 w-full h-max z-10 ${isMobile ? "p-2 bg-background/95 backdrop-blur-sm border-b border-b-muted" : "p-4"}`}
           role="banner"
         >
           <ChatHeader setOpen={setOpen} open={open} />
         </header>
 
-        <div
-          ref={scrollContainerRef}
-          className={`relative w-full flex-1 overflow-y-auto overflow-x-hidden fancy-scrollbar ${
-            isMobile ? "pt-16 pb-56" : "pt-20 pb-80"
-          }`}
-        >
-          {messages.length > 0 && (
-            <div
-              className={`sticky z-10 flex justify-end ${isMobile ? "top-2 mb-2 px-2" : "top-4 mb-4 px-4"}`}
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleClearChat}
-                className={`bg-background/80 backdrop-blur-sm hover:bg-destructive/10 hover:text-destructive ${
-                  isMobile ? "size-8" : "size-10"
-                }`}
-                title="Clear chat history"
-                aria-label="Clear all chat messages"
-              >
-                <Icon
-                  icon="material-symbols:delete-outline"
-                  className={isMobile ? "size-4" : "size-5"}
-                />
-              </Button>
-            </div>
-          )}
-          <section
-            className={`w-full mx-auto relative overflow-x-hidden ${
-              isMobile ? "max-w-full px-2" : "max-w-3xl px-4"
-            }`}
-            style={{ minWidth: 0 }}
+        <div className="relative flex-1 overflow-hidden">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <Loader className="size-8" />
+              </div>
+            }
           >
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center py-12">
-                  <Loader className="size-8" />
-                </div>
-              }
-            >
-              <MessageDisplay onRegenerate={() => setLoading(true)} />
-            </Suspense>
-          </section>
+            <TaxCalculator />
+          </Suspense>
         </div>
-
-        <section
-          className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full h-max z-10 bg-background/15 backdrop-blur-sm flex flex-col gap-2 ${
-            isMobile ? "p-2 max-w-full" : "p-4 max-w-3xl"
-          }`}
-          style={{ maxWidth: isMobile ? "100vw" : undefined }}
+        <button
+          data-tally-open="obeJrN"
+          data-tally-layout="modal"
+          data-tally-emoji-text="👋"
+          data-tally-emoji-animation="wave"
+          data-tally-auto-close="0"
+          className="absolute w-max h-max bottom-4 right-4 z-10 p-2.5 flex items-center gap-2 rounded-full bg-foreground text-background backdrop-blur-sm hover:bg-primary/60 hover:text-foreground size-10 animate-bounce repeat-infinite"
         >
-          <div
-            className={`w-full mx-auto flex flex-col gap-2 pb-6 md:pb-3 ${
-              isMobile ? "max-w-full px-0" : "max-w-3xl"
-            }`}
-            style={{ minWidth: 0 }}
-          >
-            <NotificationBanner />
-
-            <ChatInput />
-
-            <p
-              className={`mx-auto text-muted-foreground text-center italic ${
-                isMobile ? "text-xs px-2" : "text-sm"
-              }`}
-            >
-              You are advised to confirm the information gotten here with a
-              professional tax advisor.
-            </p>
-            <span className="mx-auto text-center text-muted-foreground text-xs">
-              With 👨🏾‍💻 and 🎨 by{" "}
-              <a
-                href="https://x.com/OdigboF"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-foreground"
-              >
-                Chibuzo Franklin
-              </a>{" "}
-              and{" "}
-              <a
-                href="https://x.com/OlarindeSodiq20"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-foreground"
-              >
-                Olarinde Sodiq
-              </a>
-            </span>
-          </div>
-        </section>
-      </div>
-
-      {/* Backdrop overlay for mobile */}
-      {isMobile && open && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
-          onClick={() => setOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+          Request a feature
+          <Icon icon="rivet-icons:question-mark-solid" className="size-4" />
+        </button>
+      </section>
 
       <aside
         ref={contentRef}
@@ -335,7 +256,7 @@ export default function ChatDisplay() {
           width: open
             ? isMobile
               ? "85vw"
-              : "420px"
+              : "35vw"
             : isMobile
               ? "90vw"
               : "0px",
@@ -346,7 +267,7 @@ export default function ChatDisplay() {
             : "translateX(0)",
         }}
         role="complementary"
-        aria-label="Tax Calculator"
+        aria-label="Chat"
         aria-hidden={!open}
       >
         {open && (
@@ -358,25 +279,34 @@ export default function ChatDisplay() {
               className={`absolute top-18 right-2 z-10 bg-background/80 backdrop-blur-sm hover:bg-destructive/10 hover:text-destructive ${
                 isMobile ? "size-8" : "size-10"
               }`}
-              title="Close tax calculator"
+              title="Close chat"
             >
               <Icon
                 icon="material-symbols:close-rounded"
                 className={isMobile ? "size-4" : "size-5"}
               />
             </Button>
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center h-full">
-                  <Loader className="size-8" />
-                </div>
+            <ChatDisplayContainer
+              scrollContainerRef={
+                scrollContainerRef as React.RefObject<HTMLDivElement>
               }
-            >
-              <TaxCalculator />
-            </Suspense>
+              messages={messages}
+              handleClearChat={handleClearChat}
+              isMobile={isMobile}
+              setLoading={setLoading}
+            />
           </div>
         )}
       </aside>
+
+      {/* Backdrop overlay for mobile */}
+      {isMobile && open && (
+        <div
+          className="fixed inset-0 bg-background z-40 transition-opacity duration-300"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
     </main>
   );
 }

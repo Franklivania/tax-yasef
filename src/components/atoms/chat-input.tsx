@@ -20,6 +20,10 @@ import useDeviceSize from "@/lib/hooks/useDeviceSize";
 import { sanitizeInput, containsDangerousContent } from "@/lib/utils/security";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { SROnly } from "../accessibility/sr-only";
+import { Button } from "../ui/button";
+import { APPROVED_DOCS, type ApprovedDocId } from "@/lib/docs/catalog";
+import { ensureApprovedDocLoaded } from "@/lib/docs/library";
+import { useDocsStore } from "@/lib/store/useDocsStore";
 
 export default function ChatInput({
   onLoadingChange,
@@ -37,6 +41,8 @@ export default function ChatInput({
   const addNotification = useNotificationStore(
     (state) => state.addNotification
   );
+  const selectedDocId = useDocsStore((state) => state.selectedDocId);
+  const setSelectedDocId = useDocsStore((state) => state.setSelectedDocId);
   const { isMobile } = useDeviceSize();
   const { isOnline } = useOnlineStatus();
   const [value, setValue] = useState("");
@@ -119,7 +125,8 @@ export default function ChatInput({
       const calculationsContext = buildCalculationsContext();
       const systemPrompt = await buildSystemPrompt(
         trimmedValue,
-        calculationsContext
+        calculationsContext,
+        { selectedDocId }
       );
       const response = await groqService.createCompletion(
         sanitizedValue,
@@ -161,6 +168,43 @@ export default function ChatInput({
     if (selectedOption) {
       setModel(selectedOption.label);
       addNotification("success", `You are now using ${selectedOption.label}.`);
+    }
+  };
+
+  const handleDocChange = async (docId: ApprovedDocId | null) => {
+    setSelectedDocId(docId);
+
+    if (!docId) {
+      addNotification(
+        "success",
+        "Auto mode: I'll choose the best approved Act."
+      );
+      return;
+    }
+
+    if (!isOnline) {
+      addNotification(
+        "error",
+        "You're offline. Connect to the internet to load and chat with a document."
+      );
+      return;
+    }
+
+    addNotification(
+      "success",
+      `Primary document set: ${APPROVED_DOCS.find((d) => d.id === docId)?.shortTitle || "Approved Act"}`
+    );
+
+    // Warm up the selected doc in the background (cached in IndexedDB after first ingest).
+    try {
+      await ensureApprovedDocLoaded(docId);
+    } catch (err) {
+      addNotification(
+        "error",
+        err instanceof Error
+          ? err.message
+          : "Failed to load the selected document. Please try again."
+      );
     }
   };
 
@@ -221,6 +265,45 @@ export default function ChatInput({
             )}
           </button>
         </div>
+        <section
+          className={`w-full flex items-center ${isMobile ? "gap-1.5" : "gap-2"} overflow-x-auto muted-scrollbar`}
+          aria-label="Choose an approved document to chat with"
+        >
+          <span className="text-xs font-nunito text-muted-foreground shrink-0">
+            Talk to:
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant={selectedDocId === null ? "secondary" : "outline"}
+            onClick={() => handleDocChange(null)}
+            disabled={isLoading}
+            aria-pressed={selectedDocId === null}
+            className="shrink-0"
+            title="Auto: choose the best approved Act for your question"
+          >
+            Auto
+          </Button>
+          {APPROVED_DOCS.map((doc) => (
+            <Button
+              key={doc.id}
+              type="button"
+              size="sm"
+              variant={selectedDocId === doc.id ? "secondary" : "outline"}
+              onClick={() => handleDocChange(doc.id)}
+              disabled={isLoading || !isOnline}
+              aria-pressed={selectedDocId === doc.id}
+              className="shrink-0"
+              title={doc.title}
+            >
+              {doc.shortTitle}
+            </Button>
+          ))}
+          <SROnly>
+            Approved documents only. If none is selected, Auto mode will route
+            your question to the best matching approved Act.
+          </SROnly>
+        </section>
         <section
           className={`flex items-center ${isMobile ? "gap-1.5" : "gap-2"}`}
         >

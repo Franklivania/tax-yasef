@@ -9,9 +9,10 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Icon } from "@iconify/react";
-import InfoModal from "../modals/info-modal";
+// import InfoModal from "../modals/info-modal";
 import useDeviceSize from "@/lib/hooks/useDeviceSize";
 import { SROnly } from "../accessibility/sr-only";
+import NavHandler from "./nav-handler";
 
 export default function ChatHeader({
   setOpen,
@@ -40,11 +41,13 @@ export default function ChatHeader({
         )}
       </div>
 
+      <NavHandler />
+
       <aside
         className="flex items-center gap-1 md:gap-2 shrink-0"
         style={{ minWidth: 0 }}
       >
-        <InfoModal>
+        {/* <InfoModal>
           <Button
             variant="ghost"
             size={isMobile ? "icon" : "default"}
@@ -56,7 +59,7 @@ export default function ChatHeader({
             />
             {!isMobile && <span>Info</span>}
           </Button>
-        </InfoModal>
+        </InfoModal> */}
 
         <Button
           variant="ghost"
@@ -64,7 +67,7 @@ export default function ChatHeader({
           onClick={() => setOpen(!open)}
           className={isMobile ? "text-xs px-2" : "text-sm"}
         >
-          {isMobile ? "Calculator" : "Tax Calculator"}
+          {isMobile ? "Chat With AI" : "Chat With AI"}
         </Button>
 
         <ThemeSwitcher />
