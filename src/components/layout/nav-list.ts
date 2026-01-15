@@ -12,7 +12,7 @@ export type NavItem =
 
 export const nav_items: NavItem[] = [
   {
-    link: "/https://dub.sh/tax-yasef/learn",
+    link: "https://dub.sh/tax-yasef/learn",
     label: "Learn",
     // icon: "mdi:book",
   },
@@ -32,7 +32,7 @@ export const nav_items: NavItem[] = [
     // icon: "mdi:information-outline",
   },
   {
-    link: "https://selfservice.nrs.gov",
+    link: "https://selfservice.nrs.gov.ng",
     label: "File Tax",
     // icon: "mdi:file-document",
   },
