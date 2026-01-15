@@ -205,33 +205,47 @@ export default function ChatDisplay() {
       <TokenUsageNotification />
       <OfflineIndicator />
 
-      <ChatDisplayContainer
-        open={open}
-        setOpen={setOpen}
-        scrollContainerRef={
-          scrollContainerRef as React.RefObject<HTMLDivElement>
-        }
-        messages={messages}
-        handleClearChat={handleClearChat}
-        isMobile={isMobile}
-        setLoading={setLoading}
+      <section
+        className="relative w-full flex flex-col h-screen transition-all duration-300 ease-in-out overflow-hidden fancy-scrollbar"
+        style={{
+          width: open ? (isMobile ? "100%" : "calc(100% - 35vw)") : "100%",
+          transform: isMobile && open ? "translateX(-10%)" : "translateX(0)",
+          maxWidth: "100vw",
+        }}
+        onClick={isMobile && open ? () => setOpen(false) : undefined}
+        role="region"
+        aria-label="Tax Calculator"
       >
         <header
-          className={`fixed top-0 left-0 w-full h-max z-1000 ${isMobile ? "p-2 bg-background/95 backdrop-blur-sm border-b border-b-muted" : "p-4"}`}
+          className={`fixed top-0 left-0 w-full h-max z-10 ${isMobile ? "p-2 bg-background/95 backdrop-blur-sm border-b border-b-muted" : "p-4"}`}
           role="banner"
         >
           <ChatHeader setOpen={setOpen} open={open} />
         </header>
-      </ChatDisplayContainer>
 
-      {/* Backdrop overlay for mobile */}
-      {isMobile && open && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
-          onClick={() => setOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+        <div className="relative flex-1 overflow-hidden">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <Loader className="size-8" />
+              </div>
+            }
+          >
+            <TaxCalculator />
+          </Suspense>
+        </div>
+        <button
+          data-tally-open="obeJrN"
+          data-tally-layout="modal"
+          data-tally-emoji-text="👋"
+          data-tally-emoji-animation="wave"
+          data-tally-auto-close="0"
+          className="absolute w-max h-max bottom-4 right-4 z-10 p-2.5 flex items-center gap-2 rounded-full bg-foreground text-background backdrop-blur-sm hover:bg-primary/60 hover:text-foreground size-10 animate-bounce repeat-infinite"
+        >
+          Request a feature
+          <Icon icon="rivet-icons:question-mark-solid" className="size-4" />
+        </button>
+      </section>
 
       <aside
         ref={contentRef}
@@ -242,7 +256,7 @@ export default function ChatDisplay() {
           width: open
             ? isMobile
               ? "85vw"
-              : "40vw"
+              : "35vw"
             : isMobile
               ? "90vw"
               : "0px",
@@ -253,7 +267,7 @@ export default function ChatDisplay() {
             : "translateX(0)",
         }}
         role="complementary"
-        aria-label="Tax Calculator"
+        aria-label="Chat"
         aria-hidden={!open}
       >
         {open && (
@@ -265,25 +279,34 @@ export default function ChatDisplay() {
               className={`absolute top-18 right-2 z-10 bg-background/80 backdrop-blur-sm hover:bg-destructive/10 hover:text-destructive ${
                 isMobile ? "size-8" : "size-10"
               }`}
-              title="Close tax calculator"
+              title="Close chat"
             >
               <Icon
                 icon="material-symbols:close-rounded"
                 className={isMobile ? "size-4" : "size-5"}
               />
             </Button>
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center h-full">
-                  <Loader className="size-8" />
-                </div>
+            <ChatDisplayContainer
+              scrollContainerRef={
+                scrollContainerRef as React.RefObject<HTMLDivElement>
               }
-            >
-              <TaxCalculator />
-            </Suspense>
+              messages={messages}
+              handleClearChat={handleClearChat}
+              isMobile={isMobile}
+              setLoading={setLoading}
+            />
           </div>
         )}
       </aside>
+
+      {/* Backdrop overlay for mobile */}
+      {isMobile && open && (
+        <div
+          className="fixed inset-0 bg-background z-40 transition-opacity duration-300"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
     </main>
   );
 }

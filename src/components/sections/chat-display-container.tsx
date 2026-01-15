@@ -9,8 +9,8 @@ import NotificationBanner from "../atoms/notification-banner";
 import ChatInput from "../atoms/chat-input";
 
 type ChatDisplayProps = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
   scrollContainerRef: React.RefObject<HTMLDivElement> | null;
   messages: Message[];
   handleClearChat: () => void;
@@ -20,8 +20,6 @@ type ChatDisplayProps = {
 };
 
 export default function ChatDisplayContainer({
-  open,
-  setOpen,
   scrollContainerRef,
   messages,
   handleClearChat,
@@ -30,21 +28,11 @@ export default function ChatDisplayContainer({
   children,
 }: ChatDisplayProps) {
   return (
-    <div
-      className="relative w-full flex flex-col h-screen transition-all duration-300 ease-in-out overflow-hidden fancy-scrollbar"
-      style={{
-        width: open ? (isMobile ? "100%" : "calc(100% - 40vw)") : "100%",
-        transform: isMobile && open ? "translateX(-10%)" : "translateX(0)",
-        maxWidth: "100vw",
-      }}
-      onClick={isMobile && open ? () => setOpen(false) : undefined}
-    >
+    <div className="relative w-full flex flex-col h-full overflow-hidden border-l border-muted bg-background fancy-scrollbar">
       {children}
       <div
         ref={scrollContainerRef}
-        className={`relative w-full flex-1 overflow-y-auto overflow-x-hidden fancy-scrollbar ${
-          isMobile ? "pt-16 pb-56" : "pt-20 pb-80"
-        }`}
+        className="relative w-full flex-1 overflow-y-auto overflow-x-hidden fancy-scrollbar"
       >
         {messages.length > 0 && (
           <div
@@ -86,10 +74,9 @@ export default function ChatDisplayContainer({
       </div>
 
       <section
-        className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full h-max z-10 bg-background/15 backdrop-blur-sm flex flex-col gap-2 ${
-          isMobile ? "p-2 max-w-full" : "p-4 max-w-3xl"
+        className={`w-full h-max z-10 bg-background/15 backdrop-blur-sm flex flex-col gap-2 ${
+          isMobile ? "p-2 max-w-full" : "p-4"
         }`}
-        style={{ maxWidth: isMobile ? "100vw" : undefined }}
       >
         <div
           className={`w-full mx-auto flex flex-col gap-2 pb-6 md:pb-3 ${
@@ -109,7 +96,7 @@ export default function ChatDisplayContainer({
             You are advised to confirm the information gotten here with a
             professional tax advisor.
           </p>
-          <span className="mx-auto text-center text-muted-foreground text-xs">
+          {/* <span className="mx-auto text-center text-muted-foreground text-xs">
             With 👨🏾‍💻 and 🎨 by{" "}
             <a
               href="https://x.com/OdigboF"
@@ -128,7 +115,7 @@ export default function ChatDisplayContainer({
             >
               Olarinde Sodiq
             </a>
-          </span>
+          </span> */}
         </div>
       </section>
     </div>

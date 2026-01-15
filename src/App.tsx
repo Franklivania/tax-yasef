@@ -12,7 +12,8 @@ function App() {
   const isDark = useThemeStore((state) => state.isDark);
 
   const handleNavigate = () => {
-    navigate("/chat?openCalculator=true");
+    navigate("/chat?openCalculator=false");
+    // navigate("/chat?openCalculator=true");
   };
 
   const handleAfterSubmit = () => {
