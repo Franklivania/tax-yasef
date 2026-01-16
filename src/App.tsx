@@ -12,12 +12,11 @@ function App() {
   const isDark = useThemeStore((state) => state.isDark);
 
   const handleNavigate = () => {
-    navigate("/chat?openCalculator=false");
-    // navigate("/chat?openCalculator=true");
+    navigate("/chat?openChat=false");
   };
 
   const handleAfterSubmit = () => {
-    navigate("/chat");
+    navigate("/chat?openChat=true");
   };
 
   return (
