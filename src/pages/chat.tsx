@@ -82,6 +82,8 @@ export default function ChatDisplay() {
     if (!initialized && width !== null) {
       const shouldOpenCalculator =
         searchParams.get("openCalculator") === "true";
+      const shouldOpenChat = searchParams.get("openChat") === "true";
+      const shouldCloseChat = searchParams.get("openChat") === "false";
       let savedState = getInitialCalculatorState();
 
       // If URL parameter says to open calculator, override saved state
@@ -90,6 +92,15 @@ export default function ChatDisplay() {
         // Remove the query parameter after reading it
         const newSearchParams = new URLSearchParams(searchParams);
         newSearchParams.delete("openCalculator");
+        setSearchParams(newSearchParams, { replace: true });
+      }
+
+      // If URL parameter says to open/close chat, override saved state
+      if (shouldOpenChat || shouldCloseChat) {
+        savedState = shouldOpenChat;
+        // Remove the query parameter after reading it
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete("openChat");
         setSearchParams(newSearchParams, { replace: true });
       }
 
@@ -113,6 +124,9 @@ export default function ChatDisplay() {
     if (initialized) {
       const shouldOpenCalculator =
         searchParams.get("openCalculator") === "true";
+      const shouldOpenChat = searchParams.get("openChat") === "true";
+      const shouldCloseChat = searchParams.get("openChat") === "false";
+
       if (shouldOpenCalculator && !calculatorOpen) {
         // Use startTransition to batch state updates and prevent cascading renders
         startTransition(() => {
@@ -121,6 +135,24 @@ export default function ChatDisplay() {
         // Remove the query parameter after opening
         const newSearchParams = new URLSearchParams(searchParams);
         newSearchParams.delete("openCalculator");
+        setSearchParams(newSearchParams, { replace: true });
+      }
+
+      if (shouldOpenChat && !calculatorOpen) {
+        startTransition(() => {
+          setCalculatorOpen(true);
+        });
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete("openChat");
+        setSearchParams(newSearchParams, { replace: true });
+      }
+
+      if (shouldCloseChat && calculatorOpen) {
+        startTransition(() => {
+          setCalculatorOpen(false);
+        });
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete("openChat");
         setSearchParams(newSearchParams, { replace: true });
       }
     }
