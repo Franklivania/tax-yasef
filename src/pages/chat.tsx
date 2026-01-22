@@ -274,7 +274,7 @@ export default function ChatDisplay() {
           data-tally-auto-close="0"
           className="absolute w-max h-max bottom-4 right-4 z-10 p-2.5 flex items-center gap-2 rounded-full bg-foreground text-background backdrop-blur-sm hover:bg-primary/60 hover:text-foreground size-10 animate-bounce repeat-infinite"
         >
-          Request a feature
+          {!isMobile && <>Request a feature</>}
           <Icon icon="rivet-icons:question-mark-solid" className="size-4" />
         </button>
       </section>

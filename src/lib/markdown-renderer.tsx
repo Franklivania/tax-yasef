@@ -9,6 +9,58 @@ interface ParseContext {
   codeBlockContent: string[];
 }
 
+/**
+ * Generates an anchor ID from heading text
+ * Matches the format used in the privacy policy markdown (e.g., "1-privacy-policy", "11-information-we-collect")
+ */
+function generateAnchorId(text: string): string {
+  // Remove markdown formatting (bold, italic, code spans, links)
+  const cleanText = text
+    .replace(/\*\*([^*]+)\*\*/g, "$1") // Bold
+    .replace(/\*([^*]+)\*/g, "$1") // Italic
+    .replace(/__([^_]+)__/g, "$1") // Bold alt
+    .replace(/_([^_]+)_/g, "$1") // Italic alt
+    .replace(/`([^`]+)`/g, "$1") // Code spans
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Links
+    .trim();
+
+  // Extract section number pattern (e.g., "1.", "1.1", "2.3.4")
+  const numberMatch = cleanText.match(/^(\d+(?:\.\d+)*)\.?\s*(.*)$/);
+  let sectionNumber = "";
+  let restOfText = cleanText;
+
+  if (numberMatch) {
+    // Convert "1." or "1.1" to "1" or "11" format
+    sectionNumber = numberMatch[1].replace(/\./g, "");
+    restOfText = numberMatch[2] || "";
+  }
+
+  // Convert rest of text to lowercase and replace spaces/special chars with hyphens
+  const textPart = restOfText
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "") // Remove special characters except hyphens
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single
+    .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+
+  // Combine section number with text part
+  if (sectionNumber && textPart) {
+    return `${sectionNumber}-${textPart}`;
+  } else if (sectionNumber) {
+    return sectionNumber;
+  } else if (textPart) {
+    return textPart;
+  }
+
+  // Fallback: generate a simple ID
+  return cleanText
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export function parseMarkdown(content: string): MarkdownNode[] {
   if (!content) return [];
 
@@ -77,24 +129,29 @@ export function parseMarkdown(content: string): MarkdownNode[] {
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
     if (headingMatch) {
       const level = headingMatch[1].length;
-      const text = parseInlineMarkdown(
-        headingMatch[2],
-        `heading-${result.length}`
-      );
+      const headingText = headingMatch[2];
+      const text = parseInlineMarkdown(headingText, `heading-${result.length}`);
+      // Generate anchor ID for the heading
+      const anchorId = generateAnchorId(headingText);
       // Responsive heading sizes - smaller on mobile
       const className =
         {
-          1: "text-2xl md:text-4xl font-bold my-4 md:my-6",
-          2: "text-xl md:text-3xl font-bold my-3 md:my-5",
-          3: "text-lg md:text-2xl font-semibold my-2 md:my-4",
-          4: "text-base md:text-xl font-semibold my-2 md:my-3",
-          5: "text-sm md:text-lg font-semibold my-1 md:my-2",
-          6: "text-sm md:text-base font-semibold my-1 md:my-2",
-        }[level] || "text-sm md:text-base font-semibold my-1 md:my-2";
+          1: "text-2xl md:text-4xl font-bold my-4 md:my-6 scroll-mt-20",
+          2: "text-xl md:text-3xl font-bold my-3 md:my-5 scroll-mt-20",
+          3: "text-lg md:text-2xl font-semibold my-2 md:my-4 scroll-mt-20",
+          4: "text-base md:text-xl font-semibold my-2 md:my-3 scroll-mt-20",
+          5: "text-sm md:text-lg font-semibold my-1 md:my-2 scroll-mt-20",
+          6: "text-sm md:text-base font-semibold my-1 md:my-2 scroll-mt-20",
+        }[level] ||
+        "text-sm md:text-base font-semibold my-1 md:my-2 scroll-mt-20";
 
       const HeadingComponent = React.createElement(
         `h${level}`,
-        { key: `heading-${result.length}`, className },
+        {
+          key: `heading-${result.length}`,
+          id: anchorId,
+          className,
+        },
         text
       );
       result.push(HeadingComponent);
@@ -208,7 +265,36 @@ function parseInlineMarkdown(
     {
       regex: /\[([^\]]+)\]\(([^)]+)\)/g,
       handler: (match) => {
-        const url = sanitizeURL(match[2]);
+        const rawUrl = match[2].trim();
+        const isAnchorLink = rawUrl.startsWith("#");
+
+        if (isAnchorLink) {
+          // Handle anchor links (internal navigation)
+          const anchorId = rawUrl.slice(1); // Remove the #
+          return (
+            <a
+              key={`${keyPrefix}-link-${keyCounter++}`}
+              href={`#${anchorId}`}
+              onClick={(e) => {
+                e.preventDefault();
+                const element = document.getElementById(anchorId);
+                if (element) {
+                  element.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                  // Update URL without scrolling
+                  window.history.pushState(null, "", `#${anchorId}`);
+                }
+              }}
+              className="text-primary underline hover:text-primary/80"
+            >
+              {parseInlineMarkdown(match[1], `${keyPrefix}-link-${keyCounter}`)}
+            </a>
+          );
+        }
+
+        const url = sanitizeURL(rawUrl);
         if (!url || !isValidURL(url)) {
           // If URL is invalid, return plain text
           return (
@@ -217,6 +303,8 @@ function parseInlineMarkdown(
             </span>
           );
         }
+
+        // External links
         return (
           <a
             key={`${keyPrefix}-link-${keyCounter++}`}

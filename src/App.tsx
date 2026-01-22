@@ -2,7 +2,7 @@ import { useThemeStore } from "./lib/store/useThemeStore";
 import { Image } from "./components/ui/image";
 import { ThemeSwitcher } from "@/components/layout/chat-header";
 import { Button } from "./components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ChatInput from "./components/atoms/chat-input";
 import { Icon } from "@iconify/react";
 
@@ -66,6 +66,14 @@ function App() {
             document as is stipulated in the Act. For further confirmation,
             reach out to a professional tax advisor or counsel.
           </p>
+
+          <Link
+            to="/privacy-policy"
+            target="_blank"
+            className="text-base underline mx-auto text-center text-muted-foreground hover:text-foreground"
+          >
+            Privacy Policy
+          </Link>
         </section>
       </div>
 
