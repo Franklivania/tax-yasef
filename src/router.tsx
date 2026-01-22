@@ -6,6 +6,7 @@ import {
 import { Suspense, lazy } from "react";
 import LoadingScreen from "./pages/_loading";
 import AdminPage from "./pages/admin/page";
+import PrivacyPolicy from "./pages/privacy-policy";
 
 const App = lazy(() => import("./App"));
 const ChatDisplay = lazy(() => import("./pages/chat"));
@@ -31,6 +32,10 @@ const routes: RouteObject[] = [
   {
     path: "/loading",
     element: <LoadingScreen />,
+  },
+  {
+    path: "/privacy-policy",
+    element: <PrivacyPolicy />,
   },
   {
     path: "/admin",
